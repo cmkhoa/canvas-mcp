@@ -262,9 +262,9 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
 **4h. Quizzes and peer reviews** (`tools/quizzes.rs`, `tools/peer_reviews.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_quizzes(course)` | `GET /courses/:id/quizzes` + assignments with `is_quiz_lti_assignment` (New Quizzes) | Classic by quiz ID, New Quizzes by assignment ID |
-| `get_quiz_details(course, quiz_id? \| assignment_id?)` | `/quizzes/:id` + `/quizzes/:id/submission`, or the assignment for New Quizzes | Exactly one ID. Attempts used/remaining/kept score. Never starts an attempt or reads questions |
-| `get_my_peer_reviews_todo(course?, assignment?)` | `/planner/items` + `/assignments/:id/peer_reviews` filtered to self | |
+| `list_quizzes(course)` ✓ | `GET /courses/:id/quizzes` + assignments with `is_quiz_lti_assignment` (New Quizzes) | Classic by quiz ID, New Quizzes by assignment ID |
+| `get_quiz_details(course, quiz_id? \| assignment_id?)` ✓ | `/quizzes/:id` + `/quizzes/:id/submission`, or the assignment for New Quizzes | Exactly one ID. Attempts used/remaining/kept score. Never starts an attempt or reads questions |
+| `get_my_peer_reviews_todo(course?, assignment?)` ✓ | `/planner/items` + `/assignments/:id/peer_reviews` filtered to self | |
 
 **4i. Groups** (`tools/groups.rs`)
 | Tool | Canvas endpoint(s) | Notes |

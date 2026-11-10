@@ -20,7 +20,9 @@ mod discussions;
 mod feed;
 mod files;
 mod grades;
+mod peer_reviews;
 mod profile;
+mod quizzes;
 
 /// Tool results: `Err` text is returned to the model with `isError: true`.
 pub type ToolResult = Result<String, String>;
@@ -100,7 +102,9 @@ impl CanvasServer {
                 + Self::feed_router()
                 + Self::discussions_router()
                 + Self::content_router()
-                + Self::files_router(),
+                + Self::files_router()
+                + Self::quizzes_router()
+                + Self::peer_reviews_router(),
         }
     }
 

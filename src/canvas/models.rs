@@ -284,6 +284,11 @@ pub struct Plannable {
     /// Peer reviews: the assignment the review belongs to.
     #[serde(default)]
     pub assignment_id: Option<u64>,
+    /// Peer reviews: `assigned` or `completed`.
+    #[serde(default)]
+    pub workflow_state: Option<String>,
+    #[serde(default)]
+    pub assessor_id: Option<u64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -526,6 +531,98 @@ impl Page {
     pub fn title(&self) -> &str {
         self.title.as_deref().unwrap_or("Untitled page")
     }
+}
+
+/// A Classic Quiz (`/courses/:id/quizzes`).
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Quiz {
+    pub id: u64,
+    #[serde(default)]
+    pub title: Option<String>,
+    /// `assignment` (graded), `practice_quiz`, `graded_survey`, `survey`.
+    #[serde(default)]
+    pub quiz_type: Option<String>,
+    #[serde(default)]
+    pub assignment_id: Option<u64>,
+    #[serde(default)]
+    pub due_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub unlock_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub lock_at: Option<DateTime<Utc>>,
+    /// Minutes.
+    #[serde(default)]
+    pub time_limit: Option<u32>,
+    /// -1 means unlimited.
+    #[serde(default)]
+    pub allowed_attempts: Option<i64>,
+    #[serde(default)]
+    pub points_possible: Option<f64>,
+    #[serde(default)]
+    pub question_count: Option<u32>,
+    /// `keep_highest`, `keep_latest` or `keep_average`.
+    #[serde(default)]
+    pub scoring_policy: Option<String>,
+    #[serde(default)]
+    pub one_question_at_a_time: Option<bool>,
+    #[serde(default)]
+    pub cant_go_back: Option<bool>,
+    #[serde(default)]
+    pub has_access_code: Option<bool>,
+    #[serde(default)]
+    pub locked_for_user: Option<bool>,
+    #[serde(default)]
+    pub lock_explanation: Option<String>,
+    #[serde(default)]
+    pub html_url: Option<String>,
+    /// HTML instructions.
+    #[serde(default)]
+    pub description: Option<String>,
+}
+
+/// `GET /courses/:id/quizzes/:id/submission` wraps these in `quiz_submissions`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct QuizSubmissions {
+    #[serde(default)]
+    pub quiz_submissions: Vec<QuizSubmission>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct QuizSubmission {
+    #[serde(default)]
+    pub attempt: Option<u32>,
+    #[serde(default)]
+    pub score: Option<f64>,
+    #[serde(default)]
+    pub kept_score: Option<f64>,
+    /// `untaken`, `pending_review`, `complete`, `settings_only`, `preview`.
+    #[serde(default)]
+    pub workflow_state: Option<String>,
+    #[serde(default)]
+    pub attempts_left: Option<i64>,
+    #[serde(default)]
+    pub started_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub finished_at: Option<DateTime<Utc>>,
+    /// When an in-progress attempt times out.
+    #[serde(default)]
+    pub end_at: Option<DateTime<Utc>>,
+}
+
+/// `GET /courses/:id/assignments/:id/peer_reviews`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct PeerReview {
+    pub id: u64,
+    #[serde(default)]
+    pub assessor_id: Option<u64>,
+    /// The student whose work is reviewed.
+    #[serde(default)]
+    pub user_id: Option<u64>,
+    #[serde(default)]
+    pub workflow_state: Option<String>,
+    /// With `include[]=user`; absent for anonymous peer reviews.
+    #[serde(default)]
+    pub user: Option<Author>,
 }
 
 /// A Canvas group (`/users/self/groups`, `/groups/:id`).
