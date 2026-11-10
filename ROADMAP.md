@@ -230,12 +230,12 @@ Shared building blocks first:
 (`/groups/:id/…` instead of `/courses/:id/…`).
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_discussion_topics(course, include_announcements?, group_id?)` | `GET …/discussion_topics` | Announcements excluded unless asked |
-| `list_group_discussion_topics(course, group_category_id?)` | `GET /users/self/groups` → `/groups/:id/discussion_topics` | Marks group copies vs topics started in the group |
-| `list_discussion_entries(course, topic_id, include_full_content?, include_replies?, group_id?)` | `GET …/discussion_topics/:id/entries` (+ `/replies`) | |
-| `get_discussion_topic_details(course, topic_id, group_id?)` | `GET …/discussion_topics/:id` | |
-| `get_discussion_entry_details(course, topic_id, entry_id, include_replies?, group_id?)` | `…/entries/:id` + `/replies` | |
-| `get_discussion_with_replies(course, topic_id, include_replies?, group_id?)` | `GET …/discussion_topics/:id/view` | Every entry in full, never cut |
+| `list_discussion_topics(course, include_announcements?, group_id?)` ✓ | `GET …/discussion_topics` | Announcements excluded unless asked |
+| `list_group_discussion_topics(course, group_category_id?)` ✓ | `GET /users/self/groups` → `/groups/:id/discussion_topics` | Marks group copies vs topics started in the group |
+| `list_discussion_entries(course, topic_id, include_full_content?, include_replies?, group_id?)` ✓ | `GET …/discussion_topics/:id/entries` (+ `/replies`) | |
+| `get_discussion_topic_details(course, topic_id, group_id?)` ✓ | `GET …/discussion_topics/:id` | |
+| `get_discussion_entry_details(course, topic_id, entry_id, include_replies?, group_id?)` ✓ | `…/entries/:id` + `/replies` | |
+| `get_discussion_with_replies(course, topic_id, include_replies?, group_id?)` ✓ | `GET …/discussion_topics/:id/view` | Every entry in full, never cut |
 
 **4f. Course content** (`tools/content.rs`)
 | Tool | Canvas endpoint(s) | Notes |

@@ -239,10 +239,7 @@ impl CanvasServer {
         let labels: HashMap<String, String> = match &p.course_identifier {
             Some(ident) => {
                 let course = self.resolve(ident).await?;
-                let id = course.path_id.parse::<u64>().map_err(|_| {
-                    "Pass this course's numeric ID or code for cross-course announcements."
-                        .to_string()
-                })?;
+                let id = self.numeric_course_id(&course).await?;
                 HashMap::from([(format!("course_{id}"), course.label)])
             }
             None => self

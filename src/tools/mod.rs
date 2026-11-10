@@ -15,6 +15,7 @@ use crate::{
 
 mod assignments;
 mod courses;
+mod discussions;
 mod feed;
 mod grades;
 mod profile;
@@ -82,7 +83,8 @@ impl CanvasServer {
                 + Self::courses_router()
                 + Self::assignments_router()
                 + Self::grades_router()
-                + Self::feed_router(),
+                + Self::feed_router()
+                + Self::discussions_router(),
         }
     }
 
@@ -110,6 +112,19 @@ impl CanvasServer {
 
     pub(crate) async fn resolve(&self, course: &str) -> Result<ResolvedCourse, String> {
         self.courses.resolve(course).await.map_err(err)
+    }
+
+    /// The numeric Canvas ID for a resolved course (an extra lookup only for sis_course_id:).
+    pub(crate) async fn numeric_course_id(&self, course: &ResolvedCourse) -> Result<u64, String> {
+        if let Ok(id) = course.path_id.parse() {
+            return Ok(id);
+        }
+        let c: Course = self
+            .client()
+            .get(&format!("courses/{}", course.path_id), &[])
+            .await
+            .map_err(err)?;
+        Ok(c.id)
     }
 
     /// Short labels (course codes) for the user's active courses, by course ID.

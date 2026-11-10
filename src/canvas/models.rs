@@ -382,6 +382,49 @@ impl DiscussionTopic {
     }
 }
 
+/// A post in a discussion (`…/entries`, `…/replies`, `…/entry_list`).
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DiscussionEntry {
+    pub id: u64,
+    #[serde(default)]
+    pub user_id: Option<u64>,
+    #[serde(default)]
+    pub user_name: Option<String>,
+    #[serde(default)]
+    pub message: Option<String>,
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub updated_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub parent_id: Option<u64>,
+    #[serde(default)]
+    pub read_state: Option<String>,
+    #[serde(default)]
+    pub deleted: Option<bool>,
+    /// The newest few replies Canvas embeds on top-level entries.
+    #[serde(default)]
+    pub recent_replies: Vec<DiscussionEntry>,
+    #[serde(default)]
+    pub has_more_replies: Option<bool>,
+}
+
+/// A Canvas group (`/users/self/groups`, `/groups/:id`).
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Group {
+    pub id: u64,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub course_id: Option<u64>,
+    #[serde(default)]
+    pub group_category_id: Option<u64>,
+    #[serde(default)]
+    pub members_count: Option<u64>,
+    #[serde(default)]
+    pub context_type: Option<String>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Author {
     #[serde(default)]
