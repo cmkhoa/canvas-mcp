@@ -61,6 +61,8 @@ pub struct Paged<T> {
 #[derive(Debug, Clone)]
 pub struct CanvasClient {
     http: reqwest::Client,
+    /// For signed file links, which can point at another host: never carries the token.
+    files: reqwest::Client,
     base: Url,
     limiter: Arc<Semaphore>,
     retry: RetryPolicy,
@@ -87,8 +89,13 @@ impl CanvasClient {
             // A redirect to another host would carry the bearer token with it.
             .redirect(reqwest::redirect::Policy::none())
             .build()?;
+        let files = reqwest::Client::builder()
+            .user_agent(concat!("canvas-mcp/", env!("CARGO_PKG_VERSION")))
+            .timeout(Duration::from_secs(120))
+            .build()?;
         Ok(Self {
             http,
+            files,
             base: config.api_url.clone(),
             limiter: Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS)),
             retry: RetryPolicy::default(),
@@ -174,6 +181,36 @@ impl CanvasClient {
         decode(self.send(Method::PUT, url, &[], Some(body)).await?).await
     }
 
+    /// Downloads a signed Canvas file link (no bearer token), refusing anything over `max_bytes`.
+    pub async fn download(&self, link: &str, max_bytes: u64) -> Result<Vec<u8>, CanvasError> {
+        let url =
+            Url::parse(link).map_err(|e| CanvasError::Decode(format!("bad file link: {e}")))?;
+        if url.scheme() != "https" && url.origin() != self.base.origin() {
+            return Err(CanvasError::Decode("file link is not https".into()));
+        }
+        let _permit = self
+            .limiter
+            .acquire()
+            .await
+            .expect("request semaphore is never closed");
+        let mut resp = self.files.get(url).send().await?;
+        if !resp.status().is_success() {
+            let status = resp.status();
+            return Err(map_status(status, resp.text().await.unwrap_or_default()));
+        }
+        if resp.content_length().is_some_and(|len| len > max_bytes) {
+            return Err(too_large(max_bytes));
+        }
+        let mut bytes = Vec::new();
+        while let Some(chunk) = resp.chunk().await? {
+            if bytes.len() as u64 + chunk.len() as u64 > max_bytes {
+                return Err(too_large(max_bytes));
+            }
+            bytes.extend_from_slice(&chunk);
+        }
+        Ok(bytes)
+    }
+
     fn url(&self, path: &str) -> Result<Url, CanvasError> {
         self.base
             .join(path.trim_start_matches('/'))
@@ -255,6 +292,13 @@ impl CanvasClient {
             attempt += 1;
         }
     }
+}
+
+fn too_large(max_bytes: u64) -> CanvasError {
+    CanvasError::Decode(format!(
+        "file is larger than the {:.1} MB limit",
+        max_bytes as f64 / 1_048_576.0
+    ))
 }
 
 async fn decode<T: DeserializeOwned>(resp: Response) -> Result<T, CanvasError> {

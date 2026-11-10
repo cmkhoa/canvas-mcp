@@ -2,7 +2,7 @@ use futures::future::join_all;
 use rmcp::{handler::server::wrapper::Parameters, schemars, tool, tool_router};
 use serde::Deserialize;
 
-use super::{CanvasServer, CourseParams, ToolResult, err, more_note};
+use super::{CanvasServer, CourseParams, ToolResult, err, hidden_tab, more_note};
 use crate::{
     canvas::models::{Course, Module, ModuleItem, Page},
     error::CanvasError,
@@ -97,18 +97,6 @@ pub struct PageParams {
 
 fn default_true() -> bool {
     true
-}
-
-/// Explains Canvas's 401/404 for a tab the instructor hid from students.
-fn hidden_tab(e: CanvasError, tab: &str) -> String {
-    match e {
-        CanvasError::Unauthorized | CanvasError::NotFound(_) | CanvasError::Forbidden(_) => {
-            format!(
-                "{e}\nThe {tab} tab may be hidden from students in this course; try list_modules instead."
-            )
-        }
-        other => other.to_string(),
-    }
 }
 
 impl CanvasServer {

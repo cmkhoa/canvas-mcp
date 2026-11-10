@@ -252,9 +252,9 @@ Shared building blocks first:
 **4g. Files** (`tools/files.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_course_files(course, search_term?, sort?, order?)` | `GET /courses/:id/files` | Course file tab is often hidden from students; say so on 401/403 |
-| `read_course_file(course, file_id, max_size_mb?)` | `GET /courses/:id/files/:id` → follow its `url` | Size-capped. Text files come back as text, others as base64 (or MCP image/resource content) |
-| `download_course_file(course, file_id, save_directory?)` | same | Never overwrites; refuses paths outside the target folder and symlinks; owner-only permissions |
+| `list_course_files(course, search_term?, sort?, order?)` ✓ | `GET /courses/:id/files` | Course file tab is often hidden from students; say so on 401/403 |
+| `read_course_file(course, file_id, max_size_mb?)` ✓ | `GET /courses/:id/files/:id` → follow its `url` | Size-capped. Text files come back as text, others as base64 (or MCP image/resource content) |
+| `download_course_file(course, file_id, save_directory?)` ✓ | same | Never overwrites; refuses paths outside the target folder and symlinks; owner-only permissions |
 
 The file `url` is a signed link that may point to a different host than the API (e.g. a files CDN).
 Fetch it **without** the bearer token rather than relaxing the same-host rule.

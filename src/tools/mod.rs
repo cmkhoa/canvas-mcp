@@ -18,6 +18,7 @@ mod content;
 mod courses;
 mod discussions;
 mod feed;
+mod files;
 mod grades;
 mod profile;
 
@@ -65,6 +66,18 @@ pub struct CourseAssignmentParams {
     pub assignment_id: u64,
 }
 
+/// Explains Canvas's 401/403/404 for a tab the instructor hid from students.
+pub(crate) fn hidden_tab(e: CanvasError, tab: &str) -> String {
+    match e {
+        CanvasError::Unauthorized | CanvasError::NotFound(_) | CanvasError::Forbidden(_) => {
+            format!(
+                "{e}\nThe {tab} tab may be hidden from students in this course; try list_modules instead."
+            )
+        }
+        other => other.to_string(),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CanvasServer {
     client: Arc<CanvasClient>,
@@ -86,7 +99,8 @@ impl CanvasServer {
                 + Self::grades_router()
                 + Self::feed_router()
                 + Self::discussions_router()
-                + Self::content_router(),
+                + Self::content_router()
+                + Self::files_router(),
         }
     }
 

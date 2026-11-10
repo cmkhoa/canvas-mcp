@@ -232,6 +232,8 @@ pub struct File {
     pub updated_at: Option<DateTime<Utc>>,
     #[serde(default)]
     pub locked_for_user: Option<bool>,
+    #[serde(default)]
+    pub lock_explanation: Option<String>,
 }
 
 impl File {

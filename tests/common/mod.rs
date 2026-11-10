@@ -5,7 +5,11 @@
 use std::time::Duration;
 
 use canvas_mcp::{CanvasClient, CanvasServer, Config, canvas::RetryPolicy};
-use rmcp::{RoleClient, ServiceExt, model::CallToolRequestParams, service::RunningService};
+use rmcp::{
+    RoleClient, ServiceExt,
+    model::{CallToolRequestParams, CallToolResult},
+    service::RunningService,
+};
 use serde_json::Value;
 use wiremock::{
     Mock, MockServer, ResponseTemplate,
@@ -40,11 +44,16 @@ impl Harness {
         Self { mock, client }
     }
 
-    /// Calls a tool; returns (is_error, text).
-    pub async fn call(&self, tool: &str, args: Value) -> (bool, String) {
+    /// Calls a tool and returns the raw result (for non-text content).
+    pub async fn call_raw(&self, tool: &str, args: Value) -> CallToolResult {
         let mut params = CallToolRequestParams::new(tool.to_owned());
         params.arguments = args.as_object().cloned();
-        let result = self.client.call_tool(params).await.expect("tool call");
+        self.client.call_tool(params).await.expect("tool call")
+    }
+
+    /// Calls a tool; returns (is_error, text).
+    pub async fn call(&self, tool: &str, args: Value) -> (bool, String) {
+        let result = self.call_raw(tool, args).await;
         let text = result
             .content
             .iter()
