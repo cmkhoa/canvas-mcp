@@ -155,14 +155,14 @@ Every tool goes through this. Get it right once.
 ### Phase 3: Models and helpers
 - [x] **Slim models:** define only the fields you use; serde ignores the rest. Canvas has many nullable
       fields, so use `Option<T>` liberally. IDs are `u64`. Dates are `Option<DateTime<Utc>>`.
-- [ ] `resolve_course(&str) -> Result<CourseId, ResolveError>`: numeric id, course code, partial name
+- [x] `resolve_course(&str) -> Result<CourseId, ResolveError>`: numeric id, course code, partial name
       (case- and space-insensitive), or `sis_course_id:X`. Refuse with "did you mean…" suggestions
       when nothing matches. Never send a guess to Canvas.
 - [x] `format_date(dt, tz)` with relative hints ("due in 2 days")
 - [x] `html_to_text(html, max_chars)` via html2text, with a clear truncation marker
 - [x] `fence_untrusted(text, source)`: wrap instructor/student-authored text in clear delimiters
 - [x] TTL cache for the course list (resolution runs on almost every call)
-- [ ] Unit tests for resolver matching and date formatting
+- [x] Unit tests for resolver matching and date formatting
 - **Reference to read:** `core/validation.py`, `core/dates.py`, `core/html.py`, `core/untrusted_content.py`
 
 ### Phase 4: Read-only student tools (the core value)

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use rmcp::{ServerHandler, handler::server::router::tool::ToolRouter, tool_handler};
 
-use crate::canvas::CanvasClient;
+use crate::{canvas::CanvasClient, resolve::CourseDirectory};
 
 mod profile;
 
@@ -12,19 +12,26 @@ pub type ToolResult = Result<String, String>;
 #[derive(Debug, Clone)]
 pub struct CanvasServer {
     client: Arc<CanvasClient>,
+    courses: Arc<CourseDirectory>,
     tool_router: ToolRouter<Self>,
 }
 
 impl CanvasServer {
     pub fn new(client: CanvasClient) -> Self {
+        let client = Arc::new(client);
         Self {
-            client: Arc::new(client),
+            courses: Arc::new(CourseDirectory::new(Arc::clone(&client))),
+            client,
             tool_router: Self::profile_router(),
         }
     }
 
     pub fn client(&self) -> &CanvasClient {
         &self.client
+    }
+
+    pub fn courses(&self) -> &CourseDirectory {
+        &self.courses
     }
 }
 
