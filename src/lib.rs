@@ -1,3 +1,4 @@
+pub mod cache;
 pub mod canvas;
 pub mod config;
 pub mod error;
