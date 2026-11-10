@@ -269,9 +269,9 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
 **4i. Groups** (`tools/groups.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_my_groups(course?)` | `GET /users/self/groups` | Course, group category ID, member count |
-| `get_group_members(group_id)` | `GET /groups/:id/users` | Only your own groups; never emails |
-| `list_group_files(group_id, search_term?, sort?, order?)` | `GET /groups/:id/files` | |
+| `list_my_groups(course?)` ✓ | `GET /users/self/groups` | Course, group category ID, member count |
+| `get_group_members(group_id)` ✓ | `GET /groups/:id/users` | Only your own groups; never emails |
+| `list_group_files(group_id, search_term?, sort?, order?)` ✓ | `GET /groups/:id/files` | |
 
 **4j. Calendar and planner** (`tools/calendar.rs`)
 | Tool | Canvas endpoint(s) | Notes |

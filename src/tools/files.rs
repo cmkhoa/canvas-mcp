@@ -45,6 +45,27 @@ pub enum FileOrder {
     Desc,
 }
 
+impl FileSort {
+    pub fn as_param(&self) -> &'static str {
+        match self {
+            Self::Name => "name",
+            Self::Size => "size",
+            Self::CreatedAt => "created_at",
+            Self::UpdatedAt => "updated_at",
+            Self::ContentType => "content_type",
+        }
+    }
+}
+
+impl FileOrder {
+    pub fn as_param(&self) -> &'static str {
+        match self {
+            Self::Asc => "asc",
+            Self::Desc => "desc",
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct ListFilesParams {
     /// Course code (e.g. "CS 101"), part of the course name, numeric Canvas course ID, or sis_course_id:<id>.
@@ -191,7 +212,7 @@ impl CanvasServer {
         Ok(file)
     }
 
-    fn file_line(&self, f: &File) -> String {
+    pub(crate) fn file_line(&self, f: &File) -> String {
         let mut line = format!(
             "- [file {}] {} · {}",
             f.id,
@@ -228,18 +249,7 @@ impl CanvasServer {
         {
             return Err("search_term needs at least 2 characters.".into());
         }
-        let sort = match p.sort {
-            FileSort::Name => "name",
-            FileSort::Size => "size",
-            FileSort::CreatedAt => "created_at",
-            FileSort::UpdatedAt => "updated_at",
-            FileSort::ContentType => "content_type",
-        };
-        let order = match p.order {
-            FileOrder::Asc => "asc",
-            FileOrder::Desc => "desc",
-        };
-        let mut query = vec![("sort", sort), ("order", order)];
+        let mut query = vec![("sort", p.sort.as_param()), ("order", p.order.as_param())];
         if let Some(term) = &p.search_term {
             query.push(("search_term", term.trim()));
         }

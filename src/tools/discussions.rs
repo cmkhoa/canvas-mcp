@@ -178,7 +178,7 @@ fn indent(text: &str, by: &str) -> String {
 }
 
 impl CanvasServer {
-    async fn my_groups(&self) -> Result<Vec<Group>, String> {
+    pub(crate) async fn my_groups(&self) -> Result<Vec<Group>, String> {
         self.client()
             .get_all::<Group>("users/self/groups", &[], MAX_GROUPS)
             .await

@@ -20,6 +20,7 @@ mod discussions;
 mod feed;
 mod files;
 mod grades;
+mod groups;
 mod peer_reviews;
 mod profile;
 mod quizzes;
@@ -104,7 +105,8 @@ impl CanvasServer {
                 + Self::content_router()
                 + Self::files_router()
                 + Self::quizzes_router()
-                + Self::peer_reviews_router(),
+                + Self::peer_reviews_router()
+                + Self::groups_router(),
         }
     }
 

@@ -625,6 +625,16 @@ pub struct PeerReview {
     pub user: Option<Author>,
 }
 
+/// A person as Canvas lists them to classmates (`/groups/:id/users`). Emails are never modeled.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct User {
+    pub id: u64,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub short_name: Option<String>,
+}
+
 /// A Canvas group (`/users/self/groups`, `/groups/:id`).
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Group {
