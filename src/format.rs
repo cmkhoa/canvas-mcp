@@ -14,6 +14,41 @@ pub fn format_date(at: DateTime<Utc>, tz: Tz, now: DateTime<Utc>) -> String {
     format!("{} ({})", local.format(pattern), relative(at, tz, now))
 }
 
+/// Line width for html2text; wide enough that ordinary paragraphs don't wrap.
+const TEXT_WIDTH: usize = 400;
+
+/// Canvas HTML (pages, descriptions, posts) as markdown-ish text, capped at `max_chars`.
+/// Links become numbered footnotes; scripts and styles are dropped.
+pub fn html_to_text(html: &str, max_chars: usize) -> String {
+    let text = html2text::config::plain()
+        .string_from_read(html.as_bytes(), TEXT_WIDTH)
+        .unwrap_or_else(|_| html.to_owned());
+    let mut out = String::with_capacity(text.len());
+    let mut blank_run = 0;
+    for line in text.lines().map(str::trim_end) {
+        blank_run = if line.is_empty() { blank_run + 1 } else { 0 };
+        if blank_run < 2 {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    truncate(out.trim(), max_chars)
+}
+
+/// Cuts `text` to at most `max_chars` characters, saying how much was left out.
+pub fn truncate(text: &str, max_chars: usize) -> String {
+    match text.char_indices().nth(max_chars) {
+        None => text.to_owned(),
+        Some((cut, _)) => {
+            let total = text.chars().count();
+            format!(
+                "{}\n…[truncated: showing {max_chars} of {total} characters]",
+                text[..cut].trim_end()
+            )
+        }
+    }
+}
+
 fn relative(at: DateTime<Utc>, tz: Tz, now: DateTime<Utc>) -> String {
     let secs = (at - now).num_seconds();
     let future = secs >= 0;
@@ -87,6 +122,30 @@ mod tests {
         // Thu 4:30 AM UTC is still Wed 10:30 PM in Chicago: tomorrow, not 2 days.
         let out = format_date(utc("2026-11-12T04:30:00Z"), Chicago, utc(NOW));
         assert_eq!(out, "Wed Nov 11, 10:30 PM CST (tomorrow)");
+    }
+
+    #[test]
+    fn html_becomes_readable_text() {
+        let html = r#"<h2>Week 3 &amp; Lab</h2><p>Read <a href="https://x/files/9">chapter 3</a> by <b>Friday</b>.</p>
+
+
+
+<ul><li>One</li></ul><script>alert(1)</script><p>Bye</p>"#;
+        let text = html_to_text(html, 1000);
+        assert!(text.starts_with("## Week 3 & Lab"), "{text}");
+        assert!(text.contains("[chapter 3][1]") && text.contains("[1]: https://x/files/9"));
+        assert!(text.contains("* One"));
+        assert!(!text.contains("alert") && !text.contains("<"));
+        assert!(!text.contains("\n\n\n"));
+    }
+
+    #[test]
+    fn truncate_counts_characters_not_bytes() {
+        assert_eq!(truncate("héllo", 10), "héllo");
+        assert_eq!(
+            truncate("héllo wörld", 5),
+            "héllo\n…[truncated: showing 5 of 11 characters]"
+        );
     }
 
     #[test]
