@@ -3,6 +3,7 @@ pub mod config;
 pub mod error;
 pub mod format;
 pub mod tools;
+pub mod untrusted;
 
 pub use canvas::CanvasClient;
 pub use config::Config;

@@ -160,7 +160,7 @@ Every tool goes through this. Get it right once.
       when nothing matches. Never send a guess to Canvas.
 - [x] `format_date(dt, tz)` with relative hints ("due in 2 days")
 - [x] `html_to_text(html, max_chars)` via html2text, with a clear truncation marker
-- [ ] `fence_untrusted(text, source)`: wrap instructor/student-authored text in clear delimiters
+- [x] `fence_untrusted(text, source)`: wrap instructor/student-authored text in clear delimiters
 - [ ] TTL cache for the course list (resolution runs on almost every call)
 - [ ] Unit tests for resolver matching and date formatting
 - **Reference to read:** `core/validation.py`, `core/dates.py`, `core/html.py`, `core/untrusted_content.py`
