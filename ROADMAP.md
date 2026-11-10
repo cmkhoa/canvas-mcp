@@ -222,9 +222,9 @@ Shared building blocks first:
 **4d. Announcements and activity** (`tools/feed.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_announcements(course)` | `GET /courses/:id/discussion_topics?only_announcements=true` | One course's full history |
-| `list_my_announcements(course?, start_date?, end_date?, limit?, preview_chars?)` | `GET /announcements?context_codes[]=course_…` | All active courses in one call; default last 14 days |
-| `get_my_activity_stream(item_type?, limit?, include_summary?, preview_chars?)` | `GET /users/self/activity_stream` (+ `/summary`) | Grouped by kind; reading doesn't mark anything read |
+| `list_announcements(course)` ✓ | `GET /courses/:id/discussion_topics?only_announcements=true` | One course's full history |
+| `list_my_announcements(course?, start_date?, end_date?, limit?, preview_chars?)` ✓ | `GET /announcements?context_codes[]=course_…` | All active courses in one call; default last 14 days |
+| `get_my_activity_stream(item_type?, limit?, include_summary?, preview_chars?)` ✓ | `GET /users/self/activity_stream` (+ `/summary`) | Grouped by kind; reading doesn't mark anything read |
 
 **4e. Discussions** (`tools/discussions.rs`). Every tool takes optional `group_id` to read inside a group space
 (`/groups/:id/…` instead of `/courses/:id/…`).

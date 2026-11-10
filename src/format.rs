@@ -1,5 +1,5 @@
 //! Turning Canvas data into compact text for the model.
-use chrono::{DateTime, Datelike, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, TimeZone, Utc};
 use chrono_tz::Tz;
 
 /// A Canvas timestamp in the user's zone with a relative hint, e.g.
@@ -47,6 +47,27 @@ pub fn truncate(text: &str, max_chars: usize) -> String {
             )
         }
     }
+}
+
+/// Parses a date the model passes in: `YYYY-MM-DD` (a whole day in `tz`: its start, or its
+/// end when `end_of_day`) or a full RFC 3339 timestamp.
+pub fn parse_date_param(input: &str, tz: Tz, end_of_day: bool) -> Result<DateTime<Utc>, String> {
+    let input = input.trim();
+    if let Ok(at) = DateTime::parse_from_rfc3339(input) {
+        return Ok(at.with_timezone(&Utc));
+    }
+    let day = NaiveDate::parse_from_str(input, "%Y-%m-%d").map_err(|_| {
+        format!("Unreadable date {input:?}: use YYYY-MM-DD or a full timestamp like 2026-11-20T17:00:00Z.")
+    })?;
+    let time = if end_of_day {
+        NaiveTime::from_hms_opt(23, 59, 59).expect("valid time")
+    } else {
+        NaiveTime::MIN
+    };
+    tz.from_local_datetime(&day.and_time(time))
+        .earliest()
+        .map(|at| at.with_timezone(&Utc))
+        .ok_or_else(|| format!("{input} doesn't exist in {tz}."))
 }
 
 /// Points without a pointless `.0`: `10`, `7.5`.
@@ -146,6 +167,23 @@ mod tests {
         assert!(text.contains("* One"));
         assert!(!text.contains("alert") && !text.contains("<"));
         assert!(!text.contains("\n\n\n"));
+    }
+
+    #[test]
+    fn date_params_accept_days_in_the_users_zone_and_timestamps() {
+        assert_eq!(
+            parse_date_param("2026-11-20", Chicago, false).unwrap(),
+            utc("2026-11-20T06:00:00Z")
+        );
+        assert_eq!(
+            parse_date_param("2026-11-20", Chicago, true).unwrap(),
+            utc("2026-11-21T05:59:59Z")
+        );
+        assert_eq!(
+            parse_date_param("2026-11-20T17:00:00-05:00", Chicago, false).unwrap(),
+            utc("2026-11-20T22:00:00Z")
+        );
+        assert!(parse_date_param("next friday", Chicago, false).is_err());
     }
 
     #[test]

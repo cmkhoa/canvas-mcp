@@ -316,6 +316,120 @@ pub struct TodoItem {
     pub html_url: Option<String>,
 }
 
+/// A discussion topic or announcement (`…/discussion_topics`, `/announcements`).
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DiscussionTopic {
+    pub id: u64,
+    #[serde(default)]
+    pub title: Option<String>,
+    /// HTML body.
+    #[serde(default)]
+    pub message: Option<String>,
+    #[serde(default)]
+    pub posted_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub delayed_post_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub last_reply_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub user_name: Option<String>,
+    #[serde(default)]
+    pub author: Option<Author>,
+    /// `/announcements` only: e.g. `course_123`.
+    #[serde(default)]
+    pub context_code: Option<String>,
+    #[serde(default)]
+    pub html_url: Option<String>,
+    #[serde(default)]
+    pub discussion_subentry_count: Option<u64>,
+    #[serde(default)]
+    pub read_state: Option<String>,
+    #[serde(default)]
+    pub unread_count: Option<u64>,
+    /// Graded discussions have one.
+    #[serde(default)]
+    pub assignment_id: Option<u64>,
+    #[serde(default)]
+    pub assignment: Option<Assignment>,
+    #[serde(default)]
+    pub locked: Option<bool>,
+    #[serde(default)]
+    pub pinned: Option<bool>,
+    /// Students must post before seeing others' posts.
+    #[serde(default)]
+    pub require_initial_post: Option<bool>,
+    #[serde(default)]
+    pub group_category_id: Option<u64>,
+    /// In a group space: the course-level topic this is a copy of.
+    #[serde(default)]
+    pub root_topic_id: Option<u64>,
+    #[serde(default)]
+    pub todo_date: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub discussion_type: Option<String>,
+}
+
+impl DiscussionTopic {
+    pub fn title(&self) -> &str {
+        self.title.as_deref().unwrap_or("Untitled")
+    }
+
+    pub fn author_name(&self) -> Option<&str> {
+        self.author
+            .as_ref()
+            .and_then(|a| a.display_name.as_deref())
+            .or(self.user_name.as_deref())
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Author {
+    #[serde(default)]
+    pub id: Option<u64>,
+    #[serde(default)]
+    pub display_name: Option<String>,
+}
+
+/// `GET /users/self/activity_stream`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ActivityItem {
+    /// `Announcement`, `DiscussionTopic`, `DiscussionEntry`, `Conversation`, `Submission`,
+    /// `Message`, `AssessmentRequest`, …
+    #[serde(rename = "type", default)]
+    pub kind: Option<String>,
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub message: Option<String>,
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub updated_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub course_id: Option<u64>,
+    #[serde(default)]
+    pub html_url: Option<String>,
+    #[serde(default)]
+    pub read_state: Option<bool>,
+    #[serde(default)]
+    pub notification_category: Option<String>,
+    #[serde(default)]
+    pub score: Option<f64>,
+    #[serde(default)]
+    pub grade: Option<String>,
+}
+
+/// `GET /users/self/activity_stream/summary`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ActivitySummary {
+    #[serde(rename = "type", default)]
+    pub kind: Option<String>,
+    #[serde(default)]
+    pub count: u64,
+    #[serde(default)]
+    pub unread_count: u64,
+}
+
 /// `GET /courses/:id/assignment_groups?include[]=assignments&include[]=submission`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AssignmentGroup {

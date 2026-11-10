@@ -32,3 +32,18 @@ pub enum CanvasError {
     #[error("unexpected response from Canvas: {0}")]
     Decode(String),
 }
+
+impl CanvasError {
+    /// The HTTP status behind this error, when there was one.
+    pub fn status(&self) -> Option<u16> {
+        match self {
+            Self::Unauthorized => Some(401),
+            Self::Forbidden(_) => Some(403),
+            Self::Throttled => Some(429),
+            Self::NotFound(_) => Some(404),
+            Self::Validation(_) => Some(422),
+            Self::Http { status, .. } => Some(*status),
+            Self::Network(_) | Self::Decode(_) => None,
+        }
+    }
+}
