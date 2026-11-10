@@ -1,3 +1,4 @@
+use chrono_tz::Tz;
 use secrecy::SecretString;
 use url::Url;
 
@@ -8,6 +9,8 @@ pub struct Config {
     /// Canvas REST base, always ending in `/api/v1/`.
     pub api_url: Url,
     pub token: SecretString,
+    /// Zone used when showing dates to the model.
+    pub timezone: Tz,
 }
 
 impl Config {
@@ -39,18 +42,43 @@ impl Config {
         Ok(Self {
             api_url: url,
             token: SecretString::from(token.trim().to_owned()),
+            timezone: Tz::UTC,
         })
     }
 
-    /// Reads `CANVAS_API_URL` and `CANVAS_API_TOKEN`, loading a `.env` file if present.
+    pub fn with_timezone(mut self, timezone: Tz) -> Self {
+        self.timezone = timezone;
+        self
+    }
+
+    /// Reads `CANVAS_API_URL`, `CANVAS_API_TOKEN` and optional `CANVAS_TIMEZONE`
+    /// (default: this computer's zone), loading a `.env` file if present.
     pub fn from_env() -> Result<Self, ConfigError> {
         dotenvy::dotenv().ok();
         let url = std::env::var("CANVAS_API_URL")
             .map_err(|_| ConfigError::MissingVar("CANVAS_API_URL"))?;
         let token = std::env::var("CANVAS_API_TOKEN")
             .map_err(|_| ConfigError::MissingVar("CANVAS_API_TOKEN"))?;
-        Self::new(&url, token)
+        let timezone = match std::env::var("CANVAS_TIMEZONE") {
+            Ok(name) if !name.trim().is_empty() => parse_timezone(&name)?,
+            _ => system_timezone(),
+        };
+        Ok(Self::new(&url, token)?.with_timezone(timezone))
     }
+}
+
+/// Parses an IANA zone name such as `America/Chicago`.
+pub fn parse_timezone(name: &str) -> Result<Tz, ConfigError> {
+    name.trim()
+        .parse()
+        .map_err(|_| ConfigError::InvalidTimezone(name.trim().to_owned()))
+}
+
+fn system_timezone() -> Tz {
+    iana_time_zone::get_timezone()
+        .ok()
+        .and_then(|name| name.parse().ok())
+        .unwrap_or(Tz::UTC)
 }
 
 #[cfg(test)]
@@ -61,6 +89,15 @@ mod tests {
     fn normalizes_trailing_slash() {
         let c = Config::new("https://x.instructure.com/api/v1", "t").unwrap();
         assert_eq!(c.api_url.as_str(), "https://x.instructure.com/api/v1/");
+    }
+
+    #[test]
+    fn parses_iana_timezones() {
+        assert_eq!(
+            parse_timezone(" America/Chicago ").unwrap(),
+            Tz::America__Chicago
+        );
+        assert!(parse_timezone("Mars/Olympus_Mons").is_err());
     }
 
     #[test]

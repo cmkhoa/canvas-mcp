@@ -6,6 +6,8 @@ pub enum ConfigError {
     MissingVar(&'static str),
     #[error("invalid CANVAS_API_URL: {0}")]
     InvalidUrl(String),
+    #[error("invalid CANVAS_TIMEZONE {0:?}: use an IANA name like America/Chicago")]
+    InvalidTimezone(String),
 }
 
 /// Canvas failures, worded for the model: each message says what went wrong and what to do.

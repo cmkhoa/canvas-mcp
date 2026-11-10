@@ -158,7 +158,7 @@ Every tool goes through this. Get it right once.
 - [ ] `resolve_course(&str) -> Result<CourseId, ResolveError>`: numeric id, course code, partial name
       (case- and space-insensitive), or `sis_course_id:X`. Refuse with "did you mean…" suggestions
       when nothing matches. Never send a guess to Canvas.
-- [ ] `format_date(dt, tz)` with relative hints ("due in 2 days")
+- [x] `format_date(dt, tz)` with relative hints ("due in 2 days")
 - [ ] `html_to_text(html, max_chars)` via html2text, with a clear truncation marker
 - [ ] `fence_untrusted(text, source)`: wrap instructor/student-authored text in clear delimiters
 - [ ] TTL cache for the course list (resolution runs on almost every call)

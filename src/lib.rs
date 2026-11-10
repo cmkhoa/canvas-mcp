@@ -1,6 +1,7 @@
 pub mod canvas;
 pub mod config;
 pub mod error;
+pub mod format;
 pub mod tools;
 
 pub use canvas::CanvasClient;
