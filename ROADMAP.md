@@ -153,7 +153,7 @@ Every tool goes through this. Get it right once.
 - **Reference to read:** `src/canvas_mcp/core/client.py`, `core/config.py`
 
 ### Phase 3: Models and helpers
-- [ ] **Slim models:** define only the fields you use; serde ignores the rest. Canvas has many nullable
+- [x] **Slim models:** define only the fields you use; serde ignores the rest. Canvas has many nullable
       fields, so use `Option<T>` liberally. IDs are `u64`. Dates are `Option<DateTime<Utc>>`.
 - [ ] `resolve_course(&str) -> Result<CourseId, ResolveError>`: numeric id, course code, partial name
       (case- and space-insensitive), or `sis_course_id:X`. Refuse with "did you mean…" suggestions
