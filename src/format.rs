@@ -49,6 +49,15 @@ pub fn truncate(text: &str, max_chars: usize) -> String {
     }
 }
 
+/// Points without a pointless `.0`: `10`, `7.5`.
+pub fn points(value: f64) -> String {
+    if value.fract() == 0.0 && value.abs() < 1e15 {
+        format!("{value:.0}")
+    } else {
+        format!("{}", (value * 100.0).round() / 100.0)
+    }
+}
+
 fn relative(at: DateTime<Utc>, tz: Tz, now: DateTime<Utc>) -> String {
     let secs = (at - now).num_seconds();
     let future = secs >= 0;
@@ -137,6 +146,13 @@ mod tests {
         assert!(text.contains("* One"));
         assert!(!text.contains("alert") && !text.contains("<"));
         assert!(!text.contains("\n\n\n"));
+    }
+
+    #[test]
+    fn points_drop_trailing_zero() {
+        assert_eq!(points(10.0), "10");
+        assert_eq!(points(7.5), "7.5");
+        assert_eq!(points(2.0 / 3.0), "0.67");
     }
 
     #[test]

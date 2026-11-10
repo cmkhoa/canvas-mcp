@@ -41,7 +41,10 @@ async fn main() -> anyhow::Result<()> {
     }
 
     tracing::info!(url = %config.api_url, "starting canvas-mcp on stdio");
-    let service = CanvasServer::new(client).serve(stdio()).await?;
+    let service = CanvasServer::new(client)
+        .with_timezone(config.timezone)
+        .serve(stdio())
+        .await?;
     service.waiting().await?;
     Ok(())
 }

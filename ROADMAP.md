@@ -192,26 +192,26 @@ Shared building blocks first:
 - [ ] Models: `Assignment`, `Submission`, `Enrollment`, `AssignmentGroup`, `DiscussionTopic`/`Entry`,
       `Module`/`ModuleItem`, `Page`, `File`, `Quiz`, `PlannerItem`/`PlannerNote`, `CalendarEvent`,
       `Group`, `Conversation`, `ActivityItem` (slim, field-by-field as tools need them)
-- [ ] Fan-out helper: run one request per active course concurrently (behind the client's semaphore), keep partial results, and name the courses that failed
-- [ ] Tool-split plumbing: one `#[tool_router(router = …)]` per file, combined in `tools/mod.rs`
+- [x] Fan-out helper: run one request per active course concurrently (behind the client's semaphore), keep partial results, and name the courses that failed
+- [x] Tool-split plumbing: one `#[tool_router(router = …)]` per file, combined in `tools/mod.rs`
 
 **4a. Identity and courses** (`tools/profile.rs`, `tools/courses.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
 | `get_my_profile` ✓ | `GET /users/self/profile` | Never shows email |
-| `get_my_enrollments(include_concluded?)` | `GET /courses?include[]=…` (enrollments come with the course) | Role per course; use instead of roster lookups |
-| `list_courses` | `GET /courses?enrollment_state=active&include[]=term` | Reuse the `CourseDirectory` cache |
-| `get_course_details(course)` | `GET /courses/:id?include[]=syllabus_body&include[]=term` | Syllabus is a short preview here |
-| `get_syllabus(course, output_format?, max_chars?)` | `GET /courses/:id?include[]=syllabus_body` | Complete by default; `text`/`html`/`both`; any cap is disclosed |
+| `get_my_enrollments(include_concluded?)` ✓ | `GET /courses?include[]=…` (enrollments come with the course) | Role per course; use instead of roster lookups |
+| `list_courses` ✓ | `GET /courses?enrollment_state=active&include[]=term` | Reuse the `CourseDirectory` cache |
+| `get_course_details(course)` ✓ | `GET /courses/:id?include[]=syllabus_body&include[]=term` | Syllabus is a short preview here |
+| `get_syllabus(course, output_format?, max_chars?)` ✓ | `GET /courses/:id?include[]=syllabus_body` | Complete by default; `text`/`html`/`both`; any cap is disclosed |
 
 **4b. Work and deadlines** (`tools/assignments.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `get_my_upcoming_assignments(days=7)` | `GET /planner/items?start_date=…&end_date=…` | Graded discussions count; ungraded to-dos carry `todo_date` instead of `due_at` |
-| `get_my_todo_items` | `GET /users/self/todo` | |
-| `get_my_submission_status(course?)` | `GET /courses/:id/assignments?include[]=submission` (all active courses if no course) | Trust Canvas's `missing` flag; keep external-tool (e.g. Gradescope) work out of "missing" |
-| `get_my_submission(course, assignment_id)` | `GET /courses/:id/assignments/:id/submissions/self` | Attempts used vs allowed |
-| `get_assignment_details(course, assignment_id)` | `GET /courses/:id/assignments/:id` | **Extra**: educator-only in the reference, but students need descriptions; description fenced |
+| `get_my_upcoming_assignments(days=7)` ✓ | `GET /planner/items?start_date=…&end_date=…` | Graded discussions count; ungraded to-dos carry `todo_date` instead of `due_at` |
+| `get_my_todo_items` ✓ | `GET /users/self/todo` | |
+| `get_my_submission_status(course?)` ✓ | `GET /courses/:id/assignments?include[]=submission` (all active courses if no course) | Trust Canvas's `missing` flag; keep external-tool (e.g. Gradescope) work out of "missing" |
+| `get_my_submission(course, assignment_id)` ✓ | `GET /courses/:id/assignments/:id/submissions/self` | Attempts used vs allowed |
+| `get_assignment_details(course, assignment_id)` ✓ | `GET /courses/:id/assignments/:id` | **Extra**: educator-only in the reference, but students need descriptions; description fenced |
 
 **4c. Grades** (`tools/grades.rs`)
 | Tool | Canvas endpoint(s) | Notes |

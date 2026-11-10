@@ -9,6 +9,7 @@ chrono = { version = "0.4.45", default-features = false, features = ["serde", "c
 chrono-tz = "0.10.4"
 clap = { version = "4.6.7", features = ["derive", "env"] }
 dotenvy = "0.15.7"
+futures = { version = "0.3.34", default-features = false, features = ["std", "async-await"] }
 html2text = "0.17.4"
 iana-time-zone = "0.1.65"
 reqwest = { version = "0.13.5", default-features = false, features = ["json", "query", "rustls"] }
@@ -25,5 +26,6 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 url = "2.5.8"
 
 [dev-dependencies]
+rmcp = { version = "3.9.0", features = ["client", "transport-async-rw"] }
 tokio = { version = "1.54.1", features = ["test-util", "macros", "rt-multi-thread"] }
 wiremock = "0.6.5"
