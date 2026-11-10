@@ -116,19 +116,19 @@ docs for 3.x when you get to Phase 4.
 ## 4. Phases
 
 ### Phase 0: Setup (≈1 hr)
-- [ ] Install Rust via rustup; `rustup component add clippy rustfmt`
-- [ ] `cargo new canvas-mcp` (or init in this folder), `git init`, add deps with `cargo add`
+- [x] Install Rust via rustup; `rustup component add clippy rustfmt`
+- [x] `cargo new canvas-mcp` (or init in this folder), `git init`, add deps with `cargo add`
 - [ ] Create a Canvas token: *Account → Settings → + New Access Token*
       (some schools issue tokens via a request form instead, and some expire after 30 days)
 - [ ] `.env`: `CANVAS_API_URL=https://<school>.instructure.com/api/v1`, token; add `.env` to `.gitignore`
 - [ ] Sanity check: `curl -H "Authorization: Bearer $TOKEN" $CANVAS_API_URL/users/self`
 
 ### Phase 1: Hello-world server (≈1–2 hrs)
-- [ ] `CanvasServer { client: Arc<CanvasClient> }` (`#[derive(Clone)]`, which rmcp requires, so share state via `Arc`)
-- [ ] One tool `get_my_profile` → `GET /users/self`
-- [ ] `main`: `tracing_subscriber` writing to **stderr** (stdout is the MCP channel, so **no `println!` anywhere**),
+- [x] `CanvasServer { client: Arc<CanvasClient> }` (`#[derive(Clone)]`, which rmcp requires, so share state via `Arc`)
+- [x] One tool `get_my_profile` → `GET /users/self`
+- [x] `main`: `tracing_subscriber` writing to **stderr** (stdout is the MCP channel, so **no `println!` anywhere**),
       then `server.serve(rmcp::transport::stdio()).await?.waiting().await?`
-- [ ] `--check` flag: validate URL + token against `/users/self` and exit
+- [x] `--check` flag: validate URL + token against `/users/self` and exit
 - [ ] `cargo install --path .` → binary at `~/.cargo/bin/canvas-mcp`
 - [ ] Wire into Claude Code: `claude mcp add canvas -e CANVAS_API_URL=... -e CANVAS_API_TOKEN=... -- ~/.cargo/bin/canvas-mcp`
       (or Claude Desktop's `claude_desktop_config.json`, or load `.env` with dotenvy from a fixed path)
@@ -137,19 +137,19 @@ docs for 3.x when you get to Phase 4.
 
 ### Phase 2: The Canvas client core (most important layer)
 Every tool goes through this. Get it right once.
-- [ ] `CanvasClient::new(config)`: one `reqwest::Client` with default `Authorization: Bearer` header
+- [x] `CanvasClient::new(config)`: one `reqwest::Client` with default `Authorization: Bearer` header
       (mark it sensitive), timeout, user agent
-- [ ] Generic helpers: `get<T: DeserializeOwned>(path, &query)`, `post`, `put`
-- [ ] **Pagination:** `get_all<T>(path, query, limit)` follows the `Link` header's `rel="next"` URL;
+- [x] Generic helpers: `get<T: DeserializeOwned>(path, &query)`, `post`, `put`
+- [x] **Pagination:** `get_all<T>(path, query, limit)` follows the `Link` header's `rel="next"` URL;
       `per_page=100`; hard cap on pages/items so output stays small
-- [ ] **Errors:** `CanvasError::{Unauthorized, Forbidden, NotFound, Throttled, Validation(String), Http(..), Decode(..)}`;
+- [x] **Errors:** `CanvasError::{Unauthorized, Forbidden, NotFound, Throttled, Validation(String), Http(..), Decode(..)}`;
       a single function turns these into a short message for the model
-- [ ] **Tool errors vs protocol errors:** return a tool error result (`CallToolResult::error` / `isError: true`)
+- [x] **Tool errors vs protocol errors:** return a tool error result (`CallToolResult::error` / `isError: true`)
       for Canvas failures, so the model sees the message and can recover; reserve `Err(McpError)` for bad params
-- [ ] **Throttling:** read `X-Rate-Limit-Remaining`; on 403 "Rate Limit Exceeded" back off with jitter and retry;
+- [x] **Throttling:** read `X-Rate-Limit-Remaining`; on 403 "Rate Limit Exceeded" back off with jitter and retry;
       `tokio::sync::Semaphore` (~5 permits) for concurrent fan-out
-- [ ] Validate at startup: URL is `https` and ends in `/api/v1`
-- [ ] Tests (wiremock): 3-page pagination, 401 message, throttle → retry → success, malformed JSON
+- [x] Validate at startup: URL is `https` and ends in `/api/v1`
+- [x] Tests (wiremock): 3-page pagination, 401 message, throttle → retry → success, malformed JSON
 - **Reference to read:** `src/canvas_mcp/core/client.py`, `core/config.py`
 
 ### Phase 3: Models and helpers

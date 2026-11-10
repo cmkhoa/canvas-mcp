@@ -1,4 +1,6 @@
-use canvas_mcp::{CanvasClient, CanvasServer, Config};
+use std::time::Duration;
+
+use canvas_mcp::{CanvasClient, CanvasServer, Config, canvas::RetryPolicy};
 use serde_json::json;
 use wiremock::{
     Mock, MockServer, ResponseTemplate,
@@ -7,7 +9,14 @@ use wiremock::{
 
 async fn server_for(mock: &MockServer) -> CanvasServer {
     let config = Config::new(&format!("{}/api/v1", mock.uri()), "test-token").unwrap();
-    CanvasServer::new(CanvasClient::new(&config).unwrap())
+    let client = CanvasClient::new(&config)
+        .unwrap()
+        .with_retry_policy(RetryPolicy {
+            max_retries: 1,
+            base_delay: Duration::from_millis(1),
+            max_delay: Duration::from_millis(5),
+        });
+    CanvasServer::new(client)
 }
 
 #[tokio::test]
