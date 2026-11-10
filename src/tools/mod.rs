@@ -15,6 +15,7 @@ use crate::{
 
 mod assignments;
 mod courses;
+mod grades;
 mod profile;
 
 /// Tool results: `Err` text is returned to the model with `isError: true`.
@@ -78,7 +79,8 @@ impl CanvasServer {
             timezone: Tz::UTC,
             tool_router: Self::profile_router()
                 + Self::courses_router()
-                + Self::assignments_router(),
+                + Self::assignments_router()
+                + Self::grades_router(),
         }
     }
 

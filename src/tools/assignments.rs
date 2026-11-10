@@ -9,6 +9,7 @@ use crate::{
     canvas::models::{Assignment, Course, PlannerItem, Submission, TodoItem},
     error::CanvasError,
     format::{html_to_text, points},
+    grades,
     untrusted::{fence_untrusted, inline},
 };
 
@@ -98,9 +99,7 @@ fn score_text(sub: &Submission, possible: Option<f64>) -> String {
             }
             s
         }
-        (None, _) if sub.workflow_state.as_deref() == Some("graded") && sub.posted_at.is_none() => {
-            "grade not released yet".into()
-        }
+        _ if grades::grade_not_posted(sub) => "grade not released yet".into(),
         _ => "not graded yet".into(),
     }
 }

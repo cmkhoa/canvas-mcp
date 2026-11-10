@@ -216,8 +216,8 @@ Shared building blocks first:
 **4c. Grades** (`tools/grades.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `get_my_course_grades` | `GET /courses?enrollment_state=active&include[]=total_scores&include[]=current_grading_period_scores` | `computed_current_score`/`_grade` from the enrollment |
-| `get_my_assignment_scores(course)` | `GET /courses/:id` + `/assignment_groups?include[]=assignments&include[]=submission` | Grouped by assignment group, with weights and drop rules |
+| `get_my_course_grades` ✓ | `GET /courses?enrollment_state=active&include[]=total_scores&include[]=current_grading_period_scores` | `computed_current_score`/`_grade` from the enrollment |
+| `get_my_assignment_scores(course)` ✓ | `GET /courses/:id` + `/assignment_groups?include[]=assignments&include[]=submission` | Grouped by assignment group, with weights and drop rules |
 
 **4d. Announcements and activity** (`tools/feed.rs`)
 | Tool | Canvas endpoint(s) | Notes |

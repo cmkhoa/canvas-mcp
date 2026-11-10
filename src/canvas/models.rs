@@ -50,6 +50,9 @@ pub struct Course {
     pub default_view: Option<String>,
     #[serde(default)]
     pub apply_assignment_group_weights: Option<bool>,
+    /// With `include[]=restrict_quantitative_data`: Canvas hides points and scores from students.
+    #[serde(default)]
+    pub restrict_quantitative_data: Option<bool>,
 }
 
 /// One of the caller's enrollments, as embedded in a course. Score fields need
@@ -180,9 +183,10 @@ pub struct Submission {
     pub missing: Option<bool>,
     #[serde(default)]
     pub excused: Option<bool>,
-    /// Absent while the instructor hasn't released the grade.
-    #[serde(default)]
-    pub posted_at: Option<DateTime<Utc>>,
+    /// `None`: Canvas didn't send the key. `Some(None)`: sent as null, meaning the
+    /// instructor hasn't posted (released) the grade.
+    #[serde(default, deserialize_with = "present")]
+    pub posted_at: Option<Option<DateTime<Utc>>>,
     #[serde(default)]
     pub points_deducted: Option<f64>,
     #[serde(default)]
@@ -312,6 +316,40 @@ pub struct TodoItem {
     pub html_url: Option<String>,
 }
 
+/// `GET /courses/:id/assignment_groups?include[]=assignments&include[]=submission`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AssignmentGroup {
+    pub id: u64,
+    #[serde(default)]
+    pub name: Option<String>,
+    /// Percent weight; only applies when the course uses weighted groups.
+    #[serde(default)]
+    pub group_weight: Option<f64>,
+    #[serde(default)]
+    pub rules: Option<GroupRules>,
+    #[serde(default)]
+    pub assignments: Vec<Assignment>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct GroupRules {
+    #[serde(default)]
+    pub drop_lowest: Option<u32>,
+    #[serde(default)]
+    pub drop_highest: Option<u32>,
+    #[serde(default)]
+    pub never_drop: Vec<u64>,
+}
+
+/// Wraps a present field (even `null`) in `Some`; with `#[serde(default)]` an absent one is `None`.
+fn present<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    T::deserialize(deserializer).map(Some)
+}
+
 /// Accepts `false` (or null) as `None`, otherwise deserializes `T`.
 fn false_as_none<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
@@ -416,6 +454,17 @@ mod tests {
         }))
         .unwrap();
         assert_eq!(c.my_roles(), vec!["student", "ta", "student (Auditor)"]);
+    }
+
+    #[test]
+    fn posted_at_distinguishes_absent_from_null() {
+        let absent: Submission = serde_json::from_value(json!({})).unwrap();
+        let null: Submission = serde_json::from_value(json!({ "posted_at": null })).unwrap();
+        let set: Submission =
+            serde_json::from_value(json!({ "posted_at": "2026-01-01T00:00:00Z" })).unwrap();
+        assert_eq!(absent.posted_at, None);
+        assert_eq!(null.posted_at, Some(None));
+        assert!(matches!(set.posted_at, Some(Some(_))));
     }
 
     #[test]
