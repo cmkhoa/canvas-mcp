@@ -14,6 +14,7 @@ use crate::{
 };
 
 mod assignments;
+mod content;
 mod courses;
 mod discussions;
 mod feed;
@@ -84,7 +85,8 @@ impl CanvasServer {
                 + Self::assignments_router()
                 + Self::grades_router()
                 + Self::feed_router()
-                + Self::discussions_router(),
+                + Self::discussions_router()
+                + Self::content_router(),
         }
     }
 

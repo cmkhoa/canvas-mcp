@@ -70,6 +70,19 @@ pub fn parse_date_param(input: &str, tz: Tz, end_of_day: bool) -> Result<DateTim
         .ok_or_else(|| format!("{input} doesn't exist in {tz}."))
 }
 
+/// Percent-encodes everything except RFC 3986 unreserved characters, for a single URL path
+/// segment built from user input (page slugs, SIS IDs).
+pub fn path_segment(s: &str) -> String {
+    s.bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                (b as char).to_string()
+            }
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
+}
+
 /// Points without a pointless `.0`: `10`, `7.5`.
 pub fn points(value: f64) -> String {
     if value.fract() == 0.0 && value.abs() < 1e15 {

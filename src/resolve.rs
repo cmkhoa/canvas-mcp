@@ -8,6 +8,7 @@ use crate::{
     cache::TtlCache,
     canvas::{CanvasClient, models::Course},
     error::CanvasError,
+    format::path_segment,
 };
 
 const COURSE_CACHE_TTL: Duration = Duration::from_secs(10 * 60);
@@ -108,7 +109,7 @@ fn resolve_direct(query: &str) -> Option<ResolvedCourse> {
     }
     let sis = query.strip_prefix(SIS_PREFIX)?.trim();
     (!sis.is_empty()).then(|| ResolvedCourse {
-        path_id: format!("{SIS_PREFIX}{}", encode_path_segment(sis)),
+        path_id: format!("{SIS_PREFIX}{}", path_segment(sis)),
         label: sis.to_owned(),
     })
 }
@@ -195,18 +196,6 @@ fn normalize(s: &str) -> String {
     s.chars()
         .filter(|c| c.is_alphanumeric())
         .flat_map(char::to_lowercase)
-        .collect()
-}
-
-/// Percent-encodes everything except RFC 3986 unreserved characters.
-fn encode_path_segment(s: &str) -> String {
-    s.bytes()
-        .map(|b| match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
-                (b as char).to_string()
-            }
-            _ => format!("%{b:02X}"),
-        })
         .collect()
 }
 

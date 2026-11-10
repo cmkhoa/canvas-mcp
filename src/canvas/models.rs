@@ -409,6 +409,123 @@ pub struct DiscussionEntry {
     pub has_more_replies: Option<bool>,
 }
 
+/// `GET /courses/:id/modules`. `state` is the caller's own progress.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Module {
+    pub id: u64,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub position: Option<u32>,
+    #[serde(default)]
+    pub unlock_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub require_sequential_progress: Option<bool>,
+    #[serde(default)]
+    pub prerequisite_module_ids: Vec<u64>,
+    /// `locked`, `unlocked`, `started` or `completed`.
+    #[serde(default)]
+    pub state: Option<String>,
+    #[serde(default)]
+    pub completed_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub items_count: Option<u32>,
+    /// With `include[]=items` (Canvas omits them for very large modules).
+    #[serde(default)]
+    pub items: Option<Vec<ModuleItem>>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ModuleItem {
+    pub id: u64,
+    #[serde(default)]
+    pub module_id: Option<u64>,
+    #[serde(default)]
+    pub title: Option<String>,
+    /// `File`, `Page`, `Discussion`, `Assignment`, `Quiz`, `SubHeader`, `ExternalUrl`, `ExternalTool`.
+    #[serde(rename = "type", default)]
+    pub kind: Option<String>,
+    #[serde(default)]
+    pub content_id: Option<u64>,
+    #[serde(default)]
+    pub page_url: Option<String>,
+    #[serde(default)]
+    pub external_url: Option<String>,
+    #[serde(default)]
+    pub html_url: Option<String>,
+    #[serde(default)]
+    pub indent: Option<u32>,
+    #[serde(default)]
+    pub completion_requirement: Option<CompletionRequirement>,
+    /// With `include[]=content_details`.
+    #[serde(default)]
+    pub content_details: Option<ContentDetails>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct CompletionRequirement {
+    /// `must_view`, `must_submit`, `must_contribute`, `min_score`, `must_mark_done`.
+    #[serde(rename = "type", default)]
+    pub kind: Option<String>,
+    #[serde(default)]
+    pub min_score: Option<f64>,
+    #[serde(default)]
+    pub completed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct ContentDetails {
+    #[serde(default)]
+    pub points_possible: Option<f64>,
+    #[serde(default)]
+    pub due_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub unlock_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub lock_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub locked_for_user: Option<bool>,
+    #[serde(default)]
+    pub lock_explanation: Option<String>,
+}
+
+/// A wiki page (`/courses/:id/pages`, `/front_page`).
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Page {
+    #[serde(default)]
+    pub page_id: Option<u64>,
+    /// The slug used in page URLs.
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub title: Option<String>,
+    /// Only on single-page reads.
+    #[serde(default)]
+    pub body: Option<String>,
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub updated_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub front_page: Option<bool>,
+    #[serde(default)]
+    pub locked_for_user: Option<bool>,
+    #[serde(default)]
+    pub lock_explanation: Option<String>,
+    #[serde(default)]
+    pub html_url: Option<String>,
+    #[serde(default)]
+    pub last_edited_by: Option<Author>,
+    #[serde(default)]
+    pub todo_date: Option<DateTime<Utc>>,
+}
+
+impl Page {
+    pub fn title(&self) -> &str {
+        self.title.as_deref().unwrap_or("Untitled page")
+    }
+}
+
 /// A Canvas group (`/users/self/groups`, `/groups/:id`).
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Group {

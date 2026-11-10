@@ -240,14 +240,14 @@ Shared building blocks first:
 **4f. Course content** (`tools/content.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_modules(course, include_items?, search_term?)` | `GET /courses/:id/modules` | |
-| `list_module_items(course, module_id, include_content_details?)` | `GET /courses/:id/modules/:id/items` | Completion requirements and whether you've met them |
-| `get_course_structure(course)` | `GET /courses/:id/modules?include[]=items` | Module → item tree in one call |
-| `get_course_content_overview(course, include_pages?, include_modules?, include_syllabus?)` | modules + pages + syllabus | Combined overview |
-| `list_pages(course, sort?, order?, search_term?)` | `GET /courses/:id/pages` | |
-| `get_page_content(course, page_url_or_id)` | `GET /courses/:id/pages/:url` | Body fenced |
-| `get_page_details(course, page_url_or_id)` | `GET /courses/:id/pages/:url` | Metadata + short preview |
-| `get_front_page(course)` | `GET /courses/:id/front_page` | |
+| `list_modules(course, include_items?, search_term?)` ✓ | `GET /courses/:id/modules` | |
+| `list_module_items(course, module_id, include_content_details?)` ✓ | `GET /courses/:id/modules/:id/items` | Completion requirements and whether you've met them |
+| `get_course_structure(course)` ✓ | `GET /courses/:id/modules?include[]=items` | Module → item tree in one call |
+| `get_course_content_overview(course, include_pages?, include_modules?, include_syllabus?)` ✓ | modules + pages + syllabus | Combined overview |
+| `list_pages(course, sort?, order?, search_term?)` ✓ | `GET /courses/:id/pages` | |
+| `get_page_content(course, page_url_or_id)` ✓ | `GET /courses/:id/pages/:url` | Body fenced |
+| `get_page_details(course, page_url_or_id)` ✓ | `GET /courses/:id/pages/:url` | Metadata + short preview |
+| `get_front_page(course)` ✓ | `GET /courses/:id/front_page` | |
 
 **4g. Files** (`tools/files.rs`)
 | Tool | Canvas endpoint(s) | Notes |
