@@ -29,16 +29,19 @@ async fn calendar_merges_events_and_assignments_across_contexts() {
         .and(query_param("context_codes[]", "course_210"))
         .and(query_param("context_codes[]", "group_7"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([
-            { "id": 900, "title": "Office hours", "context_name": "CHEM 210", "start_at": "2026-11-12T20:00:00Z",
-              "end_at": "2026-11-12T21:00:00Z", "location_name": "SEL 4250", "description": "<p>Bring questions.</p>" },
-            { "id": 901, "title": "Thanksgiving", "context_name": "Me", "all_day": true, "start_at": "2026-11-26T06:00:00Z" }
+            { "id": 900, "title": "Office hours", "context_name": "Organic Chemistry I", "context_code": "course_210",
+              "start_at": "2026-11-12T20:00:00Z", "end_at": "2026-11-12T21:00:00Z", "location_name": "SEL 4250",
+              "description": "<p>Bring questions.</p>" },
+            { "id": 901, "title": "Thanksgiving", "context_name": "Me", "context_code": "user_42", "all_day": true,
+              "start_at": "2026-11-26T06:00:00Z" }
         ])))
         .mount(&h.mock)
         .await;
     Mock::given(path("/api/v1/calendar_events"))
         .and(query_param("type", "assignment"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([
-            { "id": "assignment_55", "title": "Lab 3", "context_name": "CS 101", "start_at": "2026-11-11T05:59:00Z",
+            { "id": "assignment_55", "title": "Lab 3", "context_name": "Intro to Computer Science",
+              "context_code": "course_101", "all_day": true, "start_at": "2026-11-11T05:59:00Z",
               "assignment": { "id": 55, "due_at": "2026-11-11T05:59:00Z" } }
         ])))
         .mount(&h.mock)
@@ -55,11 +58,17 @@ async fn calendar_merges_events_and_assignments_across_contexts() {
     let holiday = out.find("\"Thanksgiving\"").expect(&out);
     assert!(lab < hours && hours < holiday, "{out}");
     assert!(
+        out.contains("Wed Nov 11, 5:59 AM UTC")
+            && out.contains("· CS 101 · \"Lab 3\" (assignment 55)"),
+        "{out}"
+    );
+    assert!(out.contains("· CHEM 210 · \"Office hours\""), "{out}");
+    assert!(
         out.contains("· at \"SEL 4250\" · event 900\n  Bring questions."),
         "{out}"
     );
     assert!(
-        out.contains("Thu Nov 26 (all day) · \"Me\" · \"Thanksgiving\""),
+        out.contains("Thu Nov 26 (all day) · personal · \"Thanksgiving\""),
         "{out}"
     );
     assert!(out.contains("<untrusted source=\"calendar\">"), "{out}");

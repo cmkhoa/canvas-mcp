@@ -110,6 +110,19 @@ fn valid_filter(id: &str) -> bool {
         && num.bytes().all(|b| b.is_ascii_digit())
 }
 
+/// At most 8 names, then how many more (class-wide messages include everyone).
+fn name_list(names: &[String]) -> String {
+    const SHOWN: usize = 8;
+    if names.len() <= SHOWN {
+        return names.join(", ");
+    }
+    format!(
+        "{} and {} more",
+        names[..SHOWN].join(", "),
+        names.len() - SHOWN
+    )
+}
+
 /// `TeacherEnrollment` → `teacher`, `TaEnrollment` → `ta`; custom role names pass through.
 fn role_name(role: &str) -> String {
     role.strip_suffix("Enrollment")
@@ -195,7 +208,7 @@ impl CanvasServer {
                         .iter()
                         .map(|u| inline(u.name.as_deref().unwrap_or("someone")))
                         .collect();
-                    line.push_str(&format!(" · with {}", names.join(", ")));
+                    line.push_str(&format!(" · with {}", name_list(&names)));
                 }
                 if let Some(last) = c.last_message.as_deref().filter(|m| !m.trim().is_empty()) {
                     line.push_str(&format!(
@@ -263,10 +276,14 @@ impl CanvasServer {
         if let Some(ctx) = &c.context_name {
             out.push_str(&format!(" · {}", inline(ctx)));
         }
-        out.push_str(&format!(
-            "\nParticipants: {}\n",
-            names.values().cloned().collect::<Vec<_>>().join(", ")
-        ));
+        // Canvas's participant order, with you first.
+        let mut ordered: Vec<String> = c
+            .participants
+            .iter()
+            .filter_map(|u| names.get(&u.id).cloned())
+            .collect();
+        ordered.sort_by_key(|n| !n.ends_with("(you)"));
+        out.push_str(&format!("\nParticipants: {}\n", name_list(&ordered)));
         if !p.include_messages {
             out.push_str(&format!(
                 "{} messages (pass include_messages=true to read them)",
@@ -375,7 +392,9 @@ impl CanvasServer {
                 .get(&course_id.to_string())
                 .filter(|r| !r.is_empty())
             {
-                let roles: Vec<String> = roles.iter().map(|role| role_name(role)).collect();
+                let mut roles: Vec<String> = roles.iter().map(|role| role_name(role)).collect();
+                roles.sort();
+                roles.dedup();
                 out.push_str(&format!(" · {}", roles.join(", ")));
             }
             out.push('\n');
@@ -397,6 +416,16 @@ mod tests {
                 && !valid_filter("account_1")
                 && !valid_filter("course_1&scope=x")
         );
+    }
+
+    #[test]
+    fn long_participant_lists_are_capped() {
+        let names: Vec<String> = (1..=12).map(|i| format!("P{i}")).collect();
+        assert_eq!(
+            name_list(&names),
+            "P1, P2, P3, P4, P5, P6, P7, P8 and 4 more"
+        );
+        assert_eq!(name_list(&names[..2]), "P1, P2");
     }
 
     #[test]

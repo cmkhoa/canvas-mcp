@@ -94,7 +94,7 @@ async fn recipients_are_individuals_with_roles() {
         .and(query_param("type", "user"))
         .and(query_param("search", "lee"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([
-            { "id": 5, "name": "Prof. Lee", "type": "user", "common_courses": { "101": ["TeacherEnrollment"] } },
+            { "id": 5, "name": "Prof. Lee", "type": "user", "common_courses": { "101": ["TeacherEnrollment", "TeacherEnrollment"] } },
             { "id": "course_101_teachers", "name": "Teachers", "type": "context" }
         ])))
         .mount(&h.mock)

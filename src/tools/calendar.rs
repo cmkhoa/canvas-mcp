@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Duration, TimeZone, Utc};
 use futures::future::join_all;
 use rmcp::{handler::server::wrapper::Parameters, schemars, tool, tool_router};
@@ -76,6 +78,22 @@ pub struct NotesParams {
     pub course_identifier: Option<String>,
 }
 
+/// Course code for course events (like other tools), else Canvas's context name.
+fn context_label(e: &CalendarEvent, labels: &HashMap<u64, String>) -> String {
+    let course = e
+        .context_code
+        .as_deref()
+        .and_then(|c| c.strip_prefix("course_"))
+        .and_then(|id| id.parse::<u64>().ok())
+        .and_then(|id| labels.get(&id));
+    match (course, &e.context_name, e.context_code.as_deref()) {
+        (Some(label), ..) => label.clone(),
+        (None, _, Some(code)) if code.starts_with("user_") => "personal".to_owned(),
+        (None, Some(name), _) => inline(name),
+        _ => "personal".to_owned(),
+    }
+}
+
 impl CanvasServer {
     /// Resolves a start/end/days window; defaults to today through the next 14 days.
     fn window(
@@ -129,8 +147,16 @@ impl CanvasServer {
             .items)
     }
 
-    fn event_line(&self, e: &CalendarEvent, include_description: bool) -> String {
+    fn event_line(
+        &self,
+        e: &CalendarEvent,
+        labels: &HashMap<u64, String>,
+        include_description: bool,
+    ) -> String {
+        // Assignment events are marked all-day; their due time is what matters.
+        let due = e.assignment.as_ref().and_then(|a| a.due_at);
         let when = match (e.all_day, e.start_at) {
+            _ if due.is_some() => self.date(due, ""),
             (Some(true), Some(start)) => format!(
                 "{} (all day)",
                 start.with_timezone(&self.timezone).format("%a %b %-d")
@@ -139,9 +165,7 @@ impl CanvasServer {
         };
         let mut line = format!(
             "- {when} · {} · {}",
-            e.context_name
-                .as_deref()
-                .map_or_else(|| "personal".to_owned(), inline),
+            context_label(e, labels),
             inline(e.title.as_deref().unwrap_or("Untitled"))
         );
         if let Some(a) = &e.assignment {
@@ -233,6 +257,7 @@ impl CanvasServer {
         });
         events.dedup_by(|a, b| a.id == b.id);
 
+        let labels = self.course_labels().await.unwrap_or_default();
         let window = format!(
             "{} to {}",
             self.date(Some(start), ""),
@@ -243,7 +268,7 @@ impl CanvasServer {
         } else {
             let lines: Vec<String> = events
                 .iter()
-                .map(|e| self.event_line(e, p.include_descriptions))
+                .map(|e| self.event_line(e, &labels, p.include_descriptions))
                 .collect();
             format!(
                 "Calendar from {window} ({}):\n{}",
@@ -273,7 +298,11 @@ impl CanvasServer {
             .get(&format!("calendar_events/{}", p.event_id), &[])
             .await
             .map_err(err)?;
-        let mut out = format!("{}\n", self.event_line(&e, false).trim_start_matches("- "));
+        let labels = self.course_labels().await.unwrap_or_default();
+        let mut out = format!(
+            "{}\n",
+            self.event_line(&e, &labels, false).trim_start_matches("- ")
+        );
         if e.end_at.is_some() {
             out.push_str(&format!("Ends: {}\n", self.date(e.end_at, "")));
         }
