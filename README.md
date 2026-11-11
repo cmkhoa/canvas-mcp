@@ -27,7 +27,7 @@ Requires Rust 1.88+.
 
 ```bash
 git clone https://github.com/cmkhoa/canvas-mcp && cd canvas-mcp
-cp .env.example .env    # then edit .env
+cp .env.example .env    # then edit .env (see below)
 cargo install --path .
 canvas-mcp --check      # verifies your login
 ```
@@ -39,13 +39,38 @@ In `.env`, set your Canvas URL (ending in `/api/v1`) and **one** way to sign in:
 
 `CANVAS_TIMEZONE` is optional and defaults to your computer's time zone.
 
-### Add to Claude Code
+### Connect a client
+
+Any MCP client that can launch a local program works. First put your settings where every client can find them, and make sure `~/.cargo/bin` is on your `PATH` (or use the full path below):
 
 ```bash
-claude mcp add canvas -- bash -c 'cd /path/to/canvas-mcp && exec ~/.cargo/bin/canvas-mcp'
+mkdir -p ~/.config/canvas-mcp
+mv .env ~/.config/canvas-mcp/.env && chmod 600 ~/.config/canvas-mcp/.env
 ```
 
-The server reads `.env` from its working directory, so the command changes into the project folder first.
+The server reads settings from `--env-file PATH` (or `CANVAS_MCP_ENV_FILE`), else `./.env`, else `~/.config/canvas-mcp/.env`. `canvas-mcp --check` shows which file it used.
+
+**Claude Code**
+
+```bash
+claude mcp add canvas -- canvas-mcp
+```
+
+**OpenAI Codex** (MCP servers live in `~/.codex/config.toml`)
+
+```bash
+codex mcp add canvas -- canvas-mcp
+```
+
+or add this to `~/.codex/config.toml`, using the full path if Codex can't find `canvas-mcp` on its `PATH`:
+
+```toml
+[mcp_servers.canvas]
+command = "/Users/you/.cargo/bin/canvas-mcp"
+args = ["--env-file", "/Users/you/.config/canvas-mcp/.env"]
+```
+
+Check it with `codex mcp list`.
 
 ## Safety
 
