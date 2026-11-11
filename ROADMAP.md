@@ -157,6 +157,10 @@ Every tool goes through this. Get it right once.
 - [x] **Throttling:** read `X-Rate-Limit-Remaining`; on 403 "Rate Limit Exceeded" back off with jitter and retry;
       `tokio::sync::Semaphore` (~5 permits) for concurrent fan-out
 - [x] Validate at startup: URL is `https` and ends in `/api/v1`
+- [x] **Session-cookie auth** for schools that disable student tokens: `CANVAS_SESSION_COOKIE` (the browser's
+      `Cookie` header) instead of `CANVAS_API_TOKEN`, never both. Sends `X-CSRF-Token` (from `_csrf_token`) on
+      writes, strips Canvas's `while(1);` JSON prefix, and reports 401/login redirects as an expired session.
+      Only use where school policy allows it
 - [x] Tests (wiremock): 3-page pagination, 401 message, throttle → retry → success, malformed JSON
 - **Reference to read:** `src/canvas_mcp/core/client.py`, `core/config.py`
 
@@ -357,6 +361,8 @@ Deliberately absent (as in the reference): starting or taking quizzes, and anyth
 - `CANVAS_API_URL` must include `/api/v1`; tokens are per-user and carry *all* your permissions
 - Pagination is Link-header based. Missing it silently truncates lists to 10 items
 - Throttling shows up as **403** (not 429) with "Rate Limit Exceeded"
+- Cookie-authenticated requests get `while(1);` before the JSON, and writes need `X-CSRF-Token`;
+  an expired session shows up as 401 or a redirect to the login page
 - Course codes aren't unique across terms. Prefer active enrollments when resolving
 - Dates are UTC ISO-8601; due dates can be null; per-student overrides change `due_at`
 - New Quizzes (LTI) expose almost nothing via REST beyond the assignment

@@ -13,6 +13,7 @@ dotenvy = "0.15.7"
 futures = { version = "0.3.34", default-features = false, features = ["std", "async-await"] }
 html2text = "0.17.4"
 iana-time-zone = "0.1.65"
+percent-encoding = "2.3.2"
 reqwest = { version = "0.13.5", default-features = false, features = ["json", "query", "rustls"] }
 rmcp = { version = "3.9.0", features = ["server", "macros", "transport-io", "schemars"] }
 schemars = "1.2.3"

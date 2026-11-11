@@ -173,6 +173,7 @@ dependencies = [
  "futures",
  "html2text",
  "iana-time-zone",
+ "percent-encoding",
  "reqwest",
  "rmcp",
  "schemars",

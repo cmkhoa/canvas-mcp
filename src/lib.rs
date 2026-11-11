@@ -9,5 +9,5 @@ pub mod tools;
 pub mod untrusted;
 
 pub use canvas::CanvasClient;
-pub use config::Config;
+pub use config::{Auth, Config};
 pub use tools::CanvasServer;

@@ -10,7 +10,10 @@ use tokio::sync::Semaphore;
 use url::Url;
 
 use super::pagination::next_link;
-use crate::{config::Config, error::CanvasError};
+use crate::{
+    config::{Auth, Config},
+    error::CanvasError,
+};
 
 const MAX_ERROR_BODY: usize = 300;
 /// Requests in flight at once; Canvas throttles bursts of parallel calls.
@@ -66,17 +69,39 @@ pub struct CanvasClient {
     base: Url,
     limiter: Arc<Semaphore>,
     retry: RetryPolicy,
+    /// Authenticating with a browser session cookie rather than a token.
+    session_mode: bool,
+    /// Session-cookie mode only: Canvas requires this header on non-GET requests.
+    csrf: Option<header::HeaderValue>,
 }
 
 impl CanvasClient {
     pub fn new(config: &Config) -> Result<Self, CanvasError> {
-        let mut auth =
-            header::HeaderValue::from_str(&format!("Bearer {}", config.token.expose_secret()))
-                .map_err(|_| CanvasError::Decode("API token contains invalid characters".into()))?;
-        auth.set_sensitive(true);
-
+        let sensitive = |value: &str, what: &str| {
+            header::HeaderValue::from_str(value)
+                .map(|mut v| {
+                    v.set_sensitive(true);
+                    v
+                })
+                .map_err(|_| CanvasError::Decode(format!("{what} contains invalid characters")))
+        };
         let mut headers = header::HeaderMap::new();
-        headers.insert(header::AUTHORIZATION, auth);
+        let mut csrf = None;
+        match &config.auth {
+            Auth::Token(token) => {
+                let value = sensitive(&format!("Bearer {}", token.expose_secret()), "API token")?;
+                headers.insert(header::AUTHORIZATION, value);
+            }
+            Auth::SessionCookie(cookie) => {
+                headers.insert(
+                    header::COOKIE,
+                    sensitive(cookie.expose_secret(), "session cookie")?,
+                );
+                csrf = csrf_token(cookie.expose_secret())
+                    .map(|t| sensitive(&t, "CSRF token"))
+                    .transpose()?;
+            }
+        }
         headers.insert(
             header::ACCEPT,
             header::HeaderValue::from_static("application/json"),
@@ -86,7 +111,8 @@ impl CanvasClient {
             .default_headers(headers)
             .user_agent(concat!("canvas-mcp/", env!("CARGO_PKG_VERSION")))
             .timeout(Duration::from_secs(30))
-            // A redirect to another host would carry the bearer token with it.
+            // A redirect to another host would carry the token or cookie with it, and in cookie
+            // mode a redirect means Canvas is sending us to its login page.
             .redirect(reqwest::redirect::Policy::none())
             .build()?;
         let files = reqwest::Client::builder()
@@ -99,6 +125,8 @@ impl CanvasClient {
             base: config.api_url.clone(),
             limiter: Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS)),
             retry: RetryPolicy::default(),
+            session_mode: matches!(config.auth, Auth::SessionCookie(_)),
+            csrf,
         })
     }
 
@@ -251,6 +279,11 @@ impl CanvasClient {
                 if let Some(body) = body {
                     req = req.json(body);
                 }
+                if method != Method::GET
+                    && let Some(csrf) = &self.csrf
+                {
+                    req = req.header("X-CSRF-Token", csrf.clone());
+                }
                 req.send().await
             };
 
@@ -262,7 +295,14 @@ impl CanvasClient {
                 Ok(resp) => {
                     let status = resp.status();
                     let retry_after = retry_after(resp.headers());
-                    let err = map_status(status, resp.text().await.unwrap_or_default());
+                    // In cookie mode, 401 or a redirect (to the login page) means the session ended.
+                    let err = if self.session_mode
+                        && (status == StatusCode::UNAUTHORIZED || status.is_redirection())
+                    {
+                        CanvasError::SessionExpired
+                    } else {
+                        map_status(status, resp.text().await.unwrap_or_default())
+                    };
                     // Canvas rejects throttled requests before acting, so even writes are safe to retry.
                     let retryable = matches!(err, CanvasError::Throttled)
                         || (idempotent
@@ -303,7 +343,23 @@ fn too_large(max_bytes: u64) -> CanvasError {
 
 async fn decode<T: DeserializeOwned>(resp: Response) -> Result<T, CanvasError> {
     let bytes = resp.bytes().await?;
-    serde_json::from_slice(&bytes).map_err(|e| CanvasError::Decode(e.to_string()))
+    // Canvas prefixes JSON with `while(1);` for cookie-authenticated requests (an old
+    // JSON-hijacking guard).
+    let json = bytes.strip_prefix(b"while(1);").unwrap_or(&bytes);
+    serde_json::from_slice(json).map_err(|e| CanvasError::Decode(e.to_string()))
+}
+
+/// The `_csrf_token` cookie value, percent-decoded, which Canvas expects back in
+/// `X-CSRF-Token` on writes made with a session cookie.
+fn csrf_token(cookie: &str) -> Option<String> {
+    cookie.split(';').find_map(|pair| {
+        let (name, value) = pair.trim().split_once('=')?;
+        (name == "_csrf_token").then(|| {
+            percent_encoding::percent_decode_str(value)
+                .decode_utf8_lossy()
+                .into_owned()
+        })
+    })
 }
 
 fn retry_after(headers: &header::HeaderMap) -> Option<Duration> {
@@ -349,6 +405,15 @@ fn map_status(status: StatusCode, body: String) -> CanvasError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn csrf_token_is_found_and_decoded() {
+        assert_eq!(
+            csrf_token("canvas_session=abc; _csrf_token=a%2Bb%3D%3D; log_session_id=x").as_deref(),
+            Some("a+b==")
+        );
+        assert_eq!(csrf_token("canvas_session=abc"), None);
+    }
 
     #[test]
     fn backoff_grows_and_respects_cap() {

@@ -33,8 +33,12 @@ async fn main() -> anyhow::Result<()> {
             .get("users/self/profile", &[])
             .await
             .context("contacting Canvas")?;
+        let how = match config.auth {
+            canvas_mcp::Auth::Token(_) => "an API token",
+            canvas_mcp::Auth::SessionCookie(_) => "a browser session cookie",
+        };
         eprintln!(
-            "OK: signed in to {} as {} (id {})",
+            "OK: signed in to {} as {} (id {}) using {how}",
             config.api_url, me.name, me.id
         );
         return Ok(());
