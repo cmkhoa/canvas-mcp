@@ -72,6 +72,23 @@ args = ["--env-file", "/Users/you/.config/canvas-mcp/.env"]
 
 Check it with `codex mcp list`.
 
+**Google Antigravity** (Gemini-based; tool schemas are already simplified for it)
+
+Add an entry to `~/.gemini/antigravity/mcp_config.json`, using absolute paths because the editor may not share your shell's `PATH`:
+
+```json
+{
+  "mcpServers": {
+    "canvas": {
+      "command": "/Users/you/.cargo/bin/canvas-mcp",
+      "args": ["--env-file", "/Users/you/.config/canvas-mcp/.env"]
+    }
+  }
+}
+```
+
+If the file already has other servers, add `"canvas"` next to them inside `mcpServers`. Reload the editor's MCP servers (or restart it) afterwards.
+
 ## Safety
 
 - **Credentials stay local.** They're sent only to your Canvas host, never logged, and file downloads use signed links without them.
