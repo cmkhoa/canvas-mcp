@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use chrono_tz::Tz;
 use secrecy::SecretString;
 use url::Url;
@@ -21,6 +23,8 @@ pub struct Config {
     pub auth: Auth,
     /// Zone used when showing dates to the model.
     pub timezone: Tz,
+    /// The `.env` file settings were read from, if any.
+    pub settings_file: Option<PathBuf>,
 }
 
 impl Config {
@@ -83,6 +87,7 @@ impl Config {
             api_url: url,
             auth,
             timezone: Tz::UTC,
+            settings_file: None,
         })
     }
 
@@ -93,8 +98,17 @@ impl Config {
 
     /// Reads `CANVAS_API_URL`, exactly one of `CANVAS_API_TOKEN` / `CANVAS_SESSION_COOKIE`,
     /// and optional `CANVAS_TIMEZONE` (default: this computer's zone), loading `.env` if present.
-    pub fn from_env() -> Result<Self, ConfigError> {
-        load_dotenv()?;
+    ///
+    /// Settings come from the first of: `env_file` (`--env-file` / `CANVAS_MCP_ENV_FILE`),
+    /// `./.env`, or `~/.config/canvas-mcp/.env`. Variables already set in the environment win.
+    pub fn from_env(env_file: Option<&Path>) -> Result<Self, ConfigError> {
+        let home = std::env::var_os("HOME").map(PathBuf::from);
+        let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
+        let cwd = std::env::current_dir().unwrap_or_default();
+        let settings_file = find_env_file(env_file, &cwd, home.as_deref(), xdg.as_deref())?;
+        if let Some(path) = &settings_file {
+            load_dotenv(path)?;
+        }
         let url = std::env::var("CANVAS_API_URL")
             .map_err(|_| ConfigError::MissingVar("CANVAS_API_URL"))?;
         let non_empty = |name: &str| std::env::var(name).ok().filter(|v| !v.trim().is_empty());
@@ -111,16 +125,47 @@ impl Config {
             (Some(_), Some(_)) => return Err(ConfigError::ConflictingAuth),
             (None, None) => return Err(ConfigError::MissingAuth),
         };
-        Ok(config.with_timezone(timezone))
+        Ok(Self {
+            settings_file,
+            ..config.with_timezone(timezone)
+        })
     }
 }
 
-/// Loads `.env` if there is one. A file that fails to parse is an error (silently skipping it
-/// hides the real problem), reported by variable name only, since lines hold secrets.
-fn load_dotenv() -> Result<(), ConfigError> {
-    match dotenvy::dotenv() {
-        Ok(_) => Ok(()),
-        Err(e) if e.not_found() => Ok(()),
+/// The settings file to read: the explicit one (which must exist), else `cwd/.env`, else
+/// `$XDG_CONFIG_HOME/canvas-mcp/.env` or `~/.config/canvas-mcp/.env`. Only one file is read,
+/// so a token in one and a cookie in another can't mix.
+pub fn find_env_file(
+    explicit: Option<&Path>,
+    cwd: &Path,
+    home: Option<&Path>,
+    xdg_config: Option<&Path>,
+) -> Result<Option<PathBuf>, ConfigError> {
+    if let Some(path) = explicit {
+        return if path.is_file() {
+            Ok(Some(path.to_path_buf()))
+        } else {
+            Err(ConfigError::DotEnv(format!(
+                "settings file not found: {}",
+                path.display()
+            )))
+        };
+    }
+    let config_dir = xdg_config
+        .map(Path::to_path_buf)
+        .or_else(|| home.map(|h| h.join(".config")));
+    let candidates = [
+        Some(cwd.join(".env")),
+        config_dir.map(|d| d.join("canvas-mcp").join(".env")),
+    ];
+    Ok(candidates.into_iter().flatten().find(|p| p.is_file()))
+}
+
+/// Loads a `.env` file. A file that fails to parse is an error (silently skipping it hides the
+/// real problem), reported by variable name only, since lines hold secrets.
+fn load_dotenv(path: &Path) -> Result<(), ConfigError> {
+    match dotenvy::from_path(path) {
+        Ok(()) => Ok(()),
         Err(dotenvy::Error::LineParse(line, _)) => {
             let name: String = line
                 .split('=')
@@ -131,7 +176,8 @@ fn load_dotenv() -> Result<(), ConfigError> {
                 .take(64)
                 .collect();
             Err(ConfigError::DotEnv(format!(
-                "couldn't read {name} in .env. If its value contains $, spaces or quotes, wrap it in single quotes: {name}='...'"
+                "couldn't read {name} in {}. If its value contains $, spaces or quotes, wrap it in single quotes: {name}='...'",
+                path.display()
             )))
         }
         Err(e) => Err(ConfigError::DotEnv(e.to_string())),
@@ -193,6 +239,41 @@ mod tests {
     fn normalizes_trailing_slash() {
         let c = Config::new("https://x.instructure.com/api/v1", "t").unwrap();
         assert_eq!(c.api_url.as_str(), "https://x.instructure.com/api/v1/");
+    }
+
+    #[test]
+    fn env_file_search_order() {
+        let dir = tempfile::tempdir().unwrap();
+        let (cwd, home) = (dir.path().join("work"), dir.path().join("home"));
+        let user_file = home.join(".config/canvas-mcp/.env");
+        std::fs::create_dir_all(user_file.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(&cwd).unwrap();
+        std::fs::write(&user_file, "X=1").unwrap();
+
+        // Nothing in the working directory: the per-user file.
+        assert_eq!(
+            find_env_file(None, &cwd, Some(&home), None).unwrap(),
+            Some(user_file.clone())
+        );
+        // A project .env wins over it.
+        std::fs::write(cwd.join(".env"), "X=2").unwrap();
+        assert_eq!(
+            find_env_file(None, &cwd, Some(&home), None).unwrap(),
+            Some(cwd.join(".env"))
+        );
+        // An explicit file wins over both, and must exist.
+        assert_eq!(
+            find_env_file(Some(&user_file), &cwd, Some(&home), None).unwrap(),
+            Some(user_file)
+        );
+        assert!(find_env_file(Some(&cwd.join("missing.env")), &cwd, Some(&home), None).is_err());
+        // XDG_CONFIG_HOME replaces ~/.config.
+        let xdg = dir.path().join("xdg");
+        std::fs::remove_file(cwd.join(".env")).unwrap();
+        assert_eq!(
+            find_env_file(None, &cwd, Some(&home), Some(&xdg)).unwrap(),
+            None
+        );
     }
 
     #[test]

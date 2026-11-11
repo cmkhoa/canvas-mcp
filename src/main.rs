@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 use canvas_mcp::{CanvasClient, CanvasServer, Config, canvas::models::Profile};
 use clap::Parser;
@@ -8,9 +10,13 @@ use tracing_subscriber::EnvFilter;
 #[derive(Parser)]
 #[command(version)]
 struct Args {
-    /// Check CANVAS_API_URL and CANVAS_API_TOKEN against Canvas, then exit.
+    /// Check the Canvas URL and login against Canvas, then exit.
     #[arg(long)]
     check: bool,
+
+    /// Settings file to read. Default: ./.env, then ~/.config/canvas-mcp/.env.
+    #[arg(long, env = "CANVAS_MCP_ENV_FILE", value_name = "PATH")]
+    env_file: Option<PathBuf>,
 }
 
 #[tokio::main]
@@ -25,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let args = Args::parse();
-    let config = Config::from_env().context("loading configuration")?;
+    let config = Config::from_env(args.env_file.as_deref()).context("loading configuration")?;
     let client = CanvasClient::new(&config)?;
 
     if args.check {
@@ -41,6 +47,10 @@ async fn main() -> anyhow::Result<()> {
             "OK: signed in to {} as {} (id {}) using {how}",
             config.api_url, me.name, me.id
         );
+        match &config.settings_file {
+            Some(path) => eprintln!("Settings read from {}", path.display()),
+            None => eprintln!("Settings read from environment variables (no .env file found)"),
+        }
         return Ok(());
     }
 
