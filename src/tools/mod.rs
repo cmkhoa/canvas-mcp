@@ -14,6 +14,7 @@ use crate::{
 };
 
 mod assignments;
+mod calendar;
 mod content;
 mod courses;
 mod discussions;
@@ -106,7 +107,8 @@ impl CanvasServer {
                 + Self::files_router()
                 + Self::quizzes_router()
                 + Self::peer_reviews_router()
-                + Self::groups_router(),
+                + Self::groups_router()
+                + Self::calendar_router(),
         }
     }
 

@@ -280,9 +280,9 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
 **4j. Calendar and planner** (`tools/calendar.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_calendar_events(start_date?, end_date?, days?, course?, event_type?, include_descriptions?)` | `GET /calendar_events?type=event\|assignment&context_codes[]=…` | Courses + personal calendar (`user_<id>`) + groups, date-ordered. Canvas caps `context_codes` per request, so batch them |
-| `get_calendar_event(event_id)` | `GET /calendar_events/:id` | Description fenced |
-| `list_planner_notes(start_date?, end_date?, days?, course?)` | `GET /planner_notes` | |
+| `list_calendar_events(start_date?, end_date?, days?, course?, event_type?, include_descriptions?)` ✓ | `GET /calendar_events?type=event\|assignment&context_codes[]=…` | Courses + personal calendar (`user_<id>`) + groups, date-ordered. Canvas caps `context_codes` per request, so batch them |
+| `get_calendar_event(event_id)` ✓ | `GET /calendar_events/:id` | Description fenced |
+| `list_planner_notes(start_date?, end_date?, days?, course?)` ✓ | `GET /planner_notes` | |
 
 **4k. Inbox (read)** (`tools/inbox.rs`)
 | Tool | Canvas endpoint(s) | Notes |
