@@ -1,6 +1,8 @@
 //! How Canvas treats a student's submissions when it computes grades. Shared by the score
 //! listing and (Phase 5) the grade calculator.
 pub mod calc;
+pub mod scheme;
+pub mod target;
 
 use crate::canvas::models::{Assignment, Submission};
 
@@ -119,5 +121,32 @@ mod tests {
         assert!(assignment_counts(&assignment(
             json!({ "id": 6, "published": true })
         )));
+    }
+}
+
+/// Builders shared by the calculator's tests.
+#[cfg(test)]
+pub(crate) mod test_support {
+    use super::calc::{Group, Item};
+
+    pub fn item(id: u64, score: Option<f64>, possible: f64) -> Item {
+        Item {
+            assignment_id: id,
+            name: format!("A{id}"),
+            possible,
+            score,
+        }
+    }
+
+    pub fn group(id: u64, weight: f64, items: Vec<Item>) -> Group {
+        Group {
+            id,
+            name: format!("G{id}"),
+            weight,
+            drop_lowest: 0,
+            drop_highest: 0,
+            never_drop: vec![],
+            items,
+        }
     }
 }

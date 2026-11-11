@@ -9,8 +9,10 @@ use crate::{
     format::points,
     grades::{
         self,
-        calc::{self, Mode, Scheme, Target},
+        calc::{self, Mode},
         grade_not_posted,
+        scheme::{Scheme, canvas_round},
+        target::{self, Target},
     },
     resolve::ResolvedCourse,
     untrusted::inline,
@@ -67,8 +69,8 @@ fn scheme_from_course(c: &Course) -> Option<Scheme> {
 /// `88.43% (B+)`, or `no grade yet`.
 fn percent_text(percent: Option<f64>, scheme: Option<&Scheme>) -> String {
     match (percent, scheme) {
-        (Some(p), Some(s)) => format!("{:.2}% ({})", calc::canvas_round(p, 2), s.letter(p)),
-        (Some(p), None) => format!("{:.2}%", calc::canvas_round(p, 2)),
+        (Some(p), Some(s)) => format!("{:.2}% ({})", canvas_round(p, 2), s.letter(p)),
+        (Some(p), None) => format!("{:.2}%", canvas_round(p, 2)),
         (None, _) => "no grade yet".into(),
     }
 }
@@ -483,7 +485,7 @@ impl CanvasServer {
             percent_text(fin.percent, scheme.as_ref())
         ));
         if let (Some(ours), Some(theirs)) = (current.percent, canvas_current)
-            && (calc::canvas_round(ours, 2) - theirs).abs() > 0.011
+            && (canvas_round(ours, 2) - theirs).abs() > 0.011
         {
             out.push_str(&format!(
                 "Note: this differs from Canvas's {theirs:.2}%. Likely causes: grading periods, a final grade override, \
@@ -549,7 +551,7 @@ impl CanvasServer {
             let remaining = calc::remaining(&scenario);
             let remaining_points: f64 = remaining.iter().map(|i| i.possible).sum();
             out.push('\n');
-            match calc::required_uniform_percent(&scenario, weighted, target) {
+            match target::required_uniform_percent(&scenario, weighted, target) {
                 Target::Needs { percent } => out.push_str(&format!(
                     "To reach {label}: about {percent:.2}% on each of the {} remaining assignments ({} points in all).\n",
                     remaining.len(),
