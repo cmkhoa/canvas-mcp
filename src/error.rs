@@ -14,6 +14,8 @@ pub enum ConfigError {
         "CANVAS_SESSION_COOKIE doesn't look like a Cookie header (expected name=value pairs on one line)"
     )]
     InvalidCookie,
+    #[error("{0}")]
+    DotEnv(String),
     #[error("invalid CANVAS_API_URL: {0}")]
     InvalidUrl(String),
     #[error("invalid CANVAS_TIMEZONE {0:?}: use an IANA name like America/Chicago")]

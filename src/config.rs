@@ -54,7 +54,7 @@ impl Config {
         }
         Self::build(
             api_url,
-            Auth::SessionCookie(SecretString::from(value.to_owned())),
+            Auth::SessionCookie(SecretString::from(keep_canvas_cookies(value))),
         )
     }
 
@@ -94,7 +94,7 @@ impl Config {
     /// Reads `CANVAS_API_URL`, exactly one of `CANVAS_API_TOKEN` / `CANVAS_SESSION_COOKIE`,
     /// and optional `CANVAS_TIMEZONE` (default: this computer's zone), loading `.env` if present.
     pub fn from_env() -> Result<Self, ConfigError> {
-        dotenvy::dotenv().ok();
+        load_dotenv()?;
         let url = std::env::var("CANVAS_API_URL")
             .map_err(|_| ConfigError::MissingVar("CANVAS_API_URL"))?;
         let non_empty = |name: &str| std::env::var(name).ok().filter(|v| !v.trim().is_empty());
@@ -113,6 +113,62 @@ impl Config {
         };
         Ok(config.with_timezone(timezone))
     }
+}
+
+/// Loads `.env` if there is one. A file that fails to parse is an error (silently skipping it
+/// hides the real problem), reported by variable name only, since lines hold secrets.
+fn load_dotenv() -> Result<(), ConfigError> {
+    match dotenvy::dotenv() {
+        Ok(_) => Ok(()),
+        Err(e) if e.not_found() => Ok(()),
+        Err(dotenvy::Error::LineParse(line, _)) => {
+            let name: String = line
+                .split('=')
+                .next()
+                .unwrap_or("")
+                .chars()
+                .filter(|c| c.is_ascii_alphanumeric() || *c == '_')
+                .take(64)
+                .collect();
+            Err(ConfigError::DotEnv(format!(
+                "couldn't read {name} in .env. If its value contains $, spaces or quotes, wrap it in single quotes: {name}='...'"
+            )))
+        }
+        Err(e) => Err(ConfigError::DotEnv(e.to_string())),
+    }
+}
+
+/// Canvas's own session cookies. When present, everything else in a pasted Cookie header
+/// (analytics, consent banners) is dropped: Canvas doesn't need it.
+const CANVAS_COOKIES: [&str; 5] = [
+    "canvas_session",
+    "_normandy_session",
+    "_legacy_normandy_session",
+    "_csrf_token",
+    "log_session_id",
+];
+
+fn keep_canvas_cookies(header: &str) -> String {
+    let pairs: Vec<&str> = header
+        .split(';')
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+        .collect();
+    let name = |pair: &str| pair.split_once('=').map(|(n, _)| n.trim().to_owned());
+    let has_canvas_session = pairs.iter().any(|p| {
+        matches!(
+            name(p).as_deref(),
+            Some("canvas_session" | "_normandy_session")
+        )
+    });
+    if !has_canvas_session {
+        return pairs.join("; ");
+    }
+    pairs
+        .into_iter()
+        .filter(|p| name(p).is_some_and(|n| CANVAS_COOKIES.contains(&n.as_str())))
+        .collect::<Vec<_>>()
+        .join("; ")
 }
 
 /// Parses an IANA zone name such as `America/Chicago`.
@@ -162,6 +218,28 @@ mod tests {
         assert_eq!(
             cookie.expose_secret(),
             "canvas_session=abc; _csrf_token=x%2By"
+        );
+    }
+
+    #[test]
+    fn session_cookie_drops_analytics_cookies() {
+        let c = Config::with_session_cookie(
+            "https://x.instructure.com/api/v1",
+            "cookie_notice=1; _ga_X=GS2.1.s1$o1$g0; log_session_id=L; canvas_session=S; _csrf_token=T",
+        )
+        .unwrap();
+        let Auth::SessionCookie(cookie) = c.auth else {
+            panic!("expected cookie auth")
+        };
+        use secrecy::ExposeSecret;
+        assert_eq!(
+            cookie.expose_secret(),
+            "log_session_id=L; canvas_session=S; _csrf_token=T"
+        );
+        // Unfamiliar cookie names (a self-hosted Canvas) are kept as-is.
+        assert_eq!(
+            keep_canvas_cookies("my_session=a; other=b"),
+            "my_session=a; other=b"
         );
     }
 
