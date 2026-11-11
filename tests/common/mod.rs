@@ -70,6 +70,10 @@ impl Harness {
         text
     }
 
+    pub async fn tools(&self) -> Vec<rmcp::model::Tool> {
+        self.client.list_all_tools().await.expect("list tools")
+    }
+
     pub async fn tool_names(&self) -> Vec<String> {
         let tools = self.client.list_all_tools().await.expect("list tools");
         tools.into_iter().map(|t| t.name.to_string()).collect()

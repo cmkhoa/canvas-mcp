@@ -30,6 +30,7 @@ mod pages;
 mod peer_reviews;
 mod profile;
 mod quizzes;
+mod schema;
 
 /// Tool results: `Err` text is returned to the model with `isError: true`.
 pub type ToolResult = Result<String, String>;
@@ -98,26 +99,31 @@ pub struct CanvasServer {
 impl CanvasServer {
     pub fn new(client: CanvasClient) -> Self {
         let client = Arc::new(client);
+        let mut tool_router = Self::profile_router()
+            + Self::courses_router()
+            + Self::assignments_router()
+            + Self::deadlines_router()
+            + Self::grades_router()
+            + Self::grade_scenarios_router()
+            + Self::feed_router()
+            + Self::discussions_router()
+            + Self::modules_router()
+            + Self::pages_router()
+            + Self::files_router()
+            + Self::quizzes_router()
+            + Self::peer_reviews_router()
+            + Self::groups_router()
+            + Self::calendar_router()
+            + Self::inbox_router();
+        // Simplify every parameter schema so Gemini- and OpenAI-based clients accept it.
+        for route in tool_router.map.values_mut() {
+            route.attr.input_schema = Arc::new(schema::portable(&route.attr.input_schema));
+        }
         Self {
             courses: Arc::new(CourseDirectory::new(Arc::clone(&client))),
             client,
             timezone: Tz::UTC,
-            tool_router: Self::profile_router()
-                + Self::courses_router()
-                + Self::assignments_router()
-                + Self::deadlines_router()
-                + Self::grades_router()
-                + Self::grade_scenarios_router()
-                + Self::feed_router()
-                + Self::discussions_router()
-                + Self::modules_router()
-                + Self::pages_router()
-                + Self::files_router()
-                + Self::quizzes_router()
-                + Self::peer_reviews_router()
-                + Self::groups_router()
-                + Self::calendar_router()
-                + Self::inbox_router(),
+            tool_router,
         }
     }
 

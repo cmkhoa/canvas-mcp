@@ -23,13 +23,21 @@ use crate::{
 const MAX_REMAINING_LISTED: usize = 15;
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct WhatIfScore {
+    /// Canvas assignment ID.
+    pub assignment_id: u64,
+    /// Points to assume for it.
+    pub score: f64,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct ScenarioParams {
     /// Course code (e.g. "CS 101"), part of the course name, numeric Canvas course ID, or sis_course_id:<id>.
     pub course_identifier: String,
-    /// What-if scores in points, keyed by assignment ID (from get_my_assignment_scores),
-    /// e.g. {"453891": 9.5}. They're treated as graded.
+    /// What-if scores in points, treated as graded, e.g.
+    /// [{"assignment_id": 453891, "score": 9.5}]. IDs come from get_my_assignment_scores.
     #[serde(default)]
-    pub hypothetical_scores: HashMap<String, f64>,
+    pub hypothetical_scores: Vec<WhatIfScore>,
     /// Target course percent, e.g. 90. Finds the uniform score needed on remaining work.
     #[serde(default)]
     pub target_percent: Option<f64>,
@@ -190,10 +198,17 @@ impl CanvasServer {
             .map(|i| (i.assignment_id, (i.name.as_str(), i.possible)))
             .collect();
         let mut what_if = HashMap::new();
-        for (key, score) in &p.hypothetical_scores {
-            let id: u64 = key.trim().parse().map_err(|_| {
-                format!("hypothetical_scores keys are assignment IDs; got {key:?}.")
-            })?;
+        for WhatIfScore {
+            assignment_id: id,
+            score,
+        } in &p.hypothetical_scores
+        {
+            let id = *id;
+            if what_if.contains_key(&id) {
+                return Err(format!(
+                    "Assignment {id} appears twice in hypothetical_scores."
+                ));
+            }
             if !names.contains_key(&id) {
                 return Err(format!(
                     "Assignment {id} doesn't count toward this course's grade (or isn't visible to you). \

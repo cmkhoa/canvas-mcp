@@ -203,7 +203,7 @@ async fn scenarios_apply_what_ifs_and_flag_disagreement() {
     let out = h
         .ok(
             "calculate_grade_scenarios",
-            json!({ "course_identifier": "CS 101", "hypothetical_scores": { "30": 90 } }),
+            json!({ "course_identifier": "CS 101", "hypothetical_scores": [{ "assignment_id": 30, "score": 90 }] }),
         )
         .await;
     assert!(out.contains("differs from Canvas's 85.00%"), "{out}");
@@ -230,16 +230,21 @@ async fn scenarios_validate_inputs() {
             "not both",
         ),
         (
-            json!({ "course_identifier": "CS 101", "hypothetical_scores": { "999": 5 } }),
+            json!({ "course_identifier": "CS 101", "hypothetical_scores": [{ "assignment_id": 999, "score": 5 }] }),
             "Assignment 999 doesn't count",
         ),
         (
-            json!({ "course_identifier": "CS 101", "hypothetical_scores": { "30": -1 } }),
+            json!({ "course_identifier": "CS 101", "hypothetical_scores": [{ "assignment_id": 30, "score": -1 }] }),
             "0 or more",
         ),
         (
             json!({ "course_identifier": "CS 101", "target_percent": 250 }),
             "between 0 and 200",
+        ),
+        (
+            json!({ "course_identifier": "CS 101", "hypothetical_scores": [
+                { "assignment_id": 30, "score": 1 }, { "assignment_id": 30, "score": 2 } ] }),
+            "appears twice",
         ),
     ] {
         let (is_error, text) = h.call("calculate_grade_scenarios", args).await;
