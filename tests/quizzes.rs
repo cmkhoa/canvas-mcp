@@ -200,3 +200,24 @@ async fn peer_reviews_merge_planner_and_assignment_sources() {
         "{out}"
     );
 }
+
+#[tokio::test]
+async fn disabled_quizzes_tab_is_explained() {
+    let h = Harness::new().await;
+    h.active_courses(two_courses()).await;
+    Mock::given(path("/api/v1/courses/101/quizzes"))
+        .respond_with(
+            ResponseTemplate::new(404)
+                .set_body_string("{\"message\":\"That page has been disabled for this course\"}"),
+        )
+        .mount(&h.mock)
+        .await;
+    h.get("courses/101/assignments", json!([])).await;
+    let out = h
+        .ok("list_quizzes", json!({ "course_identifier": "CS 101" }))
+        .await;
+    assert!(
+        out.contains("Classic quizzes: none (the Quizzes tab is turned off in this course)"),
+        "{out}"
+    );
+}

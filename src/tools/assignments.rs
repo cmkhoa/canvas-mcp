@@ -238,21 +238,38 @@ impl CanvasServer {
             return Ok("Your Canvas to-do list is empty.".into());
         }
         let labels = self.course_labels().await.unwrap_or_default();
+        // Canvas mixes "submitting" (your own work) with "grading" (courses you teach or TA).
+        let (grading, submitting): (Vec<&TodoItem>, Vec<&TodoItem>) = todos
+            .items
+            .iter()
+            .partition(|t| t.kind.as_deref() == Some("grading"));
         let mut out = String::from("Your Canvas to-do list:\n");
-        for t in &todos.items {
-            let course = t
-                .course_id
-                .and_then(|id| labels.get(&id).cloned())
-                .or_else(|| t.context_name.clone())
-                .unwrap_or_else(|| "unknown course".into());
-            match &t.assignment {
-                Some(a) => out.push_str(&self.assignment_line(&course, a)),
-                None => out.push_str(&format!(
-                    "- {course} · {}",
-                    t.kind.as_deref().unwrap_or("item")
-                )),
+        for (title, items) in [
+            ("To submit", submitting),
+            ("To grade (courses you teach or TA)", grading),
+        ] {
+            if items.is_empty() {
+                continue;
             }
-            out.push('\n');
+            out.push_str(&format!("\n{title} ({}):\n", items.len()));
+            for t in items {
+                let course = t
+                    .course_id
+                    .and_then(|id| labels.get(&id).cloned())
+                    .or_else(|| t.context_name.clone())
+                    .unwrap_or_else(|| "unknown course".into());
+                match &t.assignment {
+                    Some(a) => out.push_str(&self.assignment_line(&course, a)),
+                    None => out.push_str(&format!(
+                        "- {course} · {}",
+                        t.kind.as_deref().unwrap_or("item")
+                    )),
+                }
+                if let Some(n) = t.needs_grading_count.filter(|n| *n > 0) {
+                    out.push_str(&format!(" · {n} to grade"));
+                }
+                out.push('\n');
+            }
         }
         out.push_str(&more_note(todos.truncated, todos.items.len()));
         Ok(out)
@@ -315,7 +332,7 @@ impl CanvasServer {
             (Status::NotSubmitted, "Not submitted yet"),
             (
                 Status::ExternalTool,
-                "Submitted in an external tool (Canvas can't confirm)",
+                "Done in an external tool like Gradescope or PrairieLearn (check there; Canvas can't tell)",
             ),
             (Status::Submitted, "Submitted"),
             (
@@ -521,7 +538,7 @@ impl CanvasServer {
         let status_text = match status(&a) {
             Status::Missing => "MISSING",
             Status::Submitted => "submitted",
-            Status::ExternalTool => "submitted in an external tool (Canvas can't confirm)",
+            Status::ExternalTool => "done in an external tool (check there; Canvas can't tell)",
             Status::Excused => "excused",
             Status::GradedWithoutSubmission => "graded without a submission",
             Status::NoOnlineSubmission => "no online submission needed",

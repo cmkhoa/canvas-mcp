@@ -115,7 +115,7 @@ async fn submission_status_buckets_and_reports_failed_courses() {
         "{out}"
     );
     assert!(
-        out.contains("external tool (Canvas can't confirm) (1):\n- CS 101 · \"Gradescope HW\""),
+        out.contains("Gradescope or PrairieLearn (check there; Canvas can't tell) (1):\n- CS 101 · \"Gradescope HW\""),
         "{out}"
     );
     assert!(
@@ -210,10 +210,22 @@ async fn todo_lists_assignments() {
     h.active_courses(two_courses()).await;
     h.get(
         "users/self/todo",
-        json!([{ "type": "submitting", "course_id": 101,
-                 "assignment": { "id": 9, "name": "Problem Set 4", "due_at": "2026-11-20T05:59:00Z" } }]),
+        json!([
+            { "type": "submitting", "course_id": 101,
+              "assignment": { "id": 9, "name": "Problem Set 4", "due_at": "2026-11-20T05:59:00Z" } },
+            { "type": "grading", "course_id": 210, "needs_grading_count": 12,
+              "assignment": { "id": 10, "name": "Milestone 1" } }
+        ]),
     )
     .await;
     let out = h.ok("get_my_todo_items", json!({})).await;
-    assert!(out.contains("- CS 101 · \"Problem Set 4\" · due"), "{out}");
+    assert!(
+        out.contains("To submit (1):\n- CS 101 · \"Problem Set 4\" · due"),
+        "{out}"
+    );
+    assert!(
+        out.contains("To grade (courses you teach or TA) (1):\n- CHEM 210 · \"Milestone 1\""),
+        "{out}"
+    );
+    assert!(out.contains("· 12 to grade"), "{out}");
 }

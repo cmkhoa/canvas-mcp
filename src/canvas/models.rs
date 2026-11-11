@@ -310,7 +310,7 @@ pub struct PlannerSubmissions {
 /// `GET /users/self/todo`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TodoItem {
-    /// `submitting` for students.
+    /// `submitting` (your own work) or `grading` (courses you teach or TA).
     #[serde(rename = "type", default)]
     pub kind: Option<String>,
     #[serde(default)]
@@ -321,6 +321,9 @@ pub struct TodoItem {
     pub context_name: Option<String>,
     #[serde(default)]
     pub html_url: Option<String>,
+    /// `grading` items: submissions waiting for you to grade.
+    #[serde(default)]
+    pub needs_grading_count: Option<u64>,
 }
 
 /// A discussion topic or announcement (`…/discussion_topics`, `/announcements`).

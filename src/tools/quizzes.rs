@@ -217,6 +217,9 @@ impl CanvasServer {
                 }
                 out.push_str(&more_note(q.truncated, q.items.len()));
             }
+            // Canvas answers 404 "That page has been disabled" when the Quizzes tab is off.
+            Err(CanvasError::NotFound(_)) => out
+                .push_str("Classic quizzes: none (the Quizzes tab is turned off in this course)\n"),
             Err(e) => out.push_str(&format!("Classic quizzes: unavailable ({e})\n")),
         }
         let new_quizzes: Vec<&Assignment> = assignments
