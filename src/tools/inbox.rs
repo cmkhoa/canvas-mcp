@@ -41,7 +41,7 @@ pub struct ConversationsParams {
     /// inbox (default), unread, starred, archived or sent.
     #[serde(default)]
     pub scope: Scope,
-    /// Only conversations tied to these, e.g. ["course_59112", "user_27096"].
+    /// Only conversations tied to these, e.g. ["course_123", "user_456"].
     #[serde(default)]
     pub filter_ids: Vec<String>,
     /// How several filter_ids combine: or (default) or and.
