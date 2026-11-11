@@ -1,5 +1,7 @@
 # canvas-mcp
 
+[![CI](https://github.com/cmkhoa/canvas-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/cmkhoa/canvas-mcp/actions/workflows/ci.yml)
+
 A [Model Context Protocol](https://modelcontextprotocol.io) server for **Canvas LMS**, written in Rust. It lets Claude (or any MCP client) read your own Canvas data: deadlines, grades, announcements, course content and more.
 
 It's built for students and ships as a single binary. Reading is the default: nothing is submitted or changed in Canvas.

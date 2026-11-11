@@ -339,7 +339,7 @@ Deliberately absent (as in the reference): starting or taking quizzes, and anyth
       client over an in-memory duplex (`tokio::io::duplex`), and assert the request sent *and* the output.
       Never test writes against live Canvas.
 - [ ] A metadata test: every listed tool has a description and annotations
-- [ ] `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test` in a pre-commit hook and/or GitHub Actions
+- [x] `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test` in a pre-commit hook and/or GitHub Actions
 - [ ] Token never shows up in logs or `Debug` output (`secrecy::SecretString`)
 - [ ] Output size caps; `max_chars` params on tools that return large text
 - [ ] README: build/install, env vars, client config snippets, tool list
