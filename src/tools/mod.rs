@@ -22,6 +22,7 @@ mod feed;
 mod files;
 mod grades;
 mod groups;
+mod inbox;
 mod peer_reviews;
 mod profile;
 mod quizzes;
@@ -108,7 +109,8 @@ impl CanvasServer {
                 + Self::quizzes_router()
                 + Self::peer_reviews_router()
                 + Self::groups_router()
-                + Self::calendar_router(),
+                + Self::calendar_router()
+                + Self::inbox_router(),
         }
     }
 

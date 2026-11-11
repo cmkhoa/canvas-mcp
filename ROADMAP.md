@@ -287,10 +287,10 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
 **4k. Inbox (read)** (`tools/inbox.rs`)
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
-| `list_conversations(scope?, filter_ids?, filter_mode?, include_participants?)` | `GET /conversations` | Messages fenced |
-| `get_conversation_details(conversation_id, include_messages?)` | `GET /conversations/:id` | Reading it marks it read on Canvas; say so in the description |
-| `get_unread_count` | `GET /conversations/unread_count` | |
-| `find_message_recipients(course, search?, role?, limit?)` | `GET /search/recipients?context=course_:id_…` | Individuals only, with user IDs, for `send_message` |
+| `list_conversations(scope?, filter_ids?, filter_mode?, include_participants?)` ✓ | `GET /conversations` | Messages fenced |
+| `get_conversation_details(conversation_id, include_messages?)` ✓ | `GET /conversations/:id` | Reading it marks it read on Canvas; say so in the description |
+| `get_unread_count` ✓ | `GET /conversations/unread_count` | |
+| `find_message_recipients(course, search?, role?, limit?)` ✓ | `GET /search/recipients?context=course_:id_…` | Individuals only, with user IDs, for `send_message` |
 
 - **Done when:** all 45 tools are listed, tested against wiremock, and "What's due this week, what am I missing, and what did my instructors announce?" works end-to-end on real Canvas
 
