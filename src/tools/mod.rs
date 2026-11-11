@@ -20,6 +20,7 @@ mod courses;
 mod discussions;
 mod feed;
 mod files;
+mod grade_scenarios;
 mod grades;
 mod groups;
 mod inbox;
@@ -102,6 +103,7 @@ impl CanvasServer {
                 + Self::courses_router()
                 + Self::assignments_router()
                 + Self::grades_router()
+                + Self::grade_scenarios_router()
                 + Self::feed_router()
                 + Self::discussions_router()
                 + Self::content_router()
