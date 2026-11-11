@@ -305,7 +305,7 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
   - Round like Ruby (half away from zero, 2 decimals) before picking a letter; points-based schemes round in points first
   - Letter from the course grading scheme (`/courses/:id/grading_standards/:id`), else Canvas's default scheme (A 94, A- 90, B+ 87, B 84, B- 80, C+ 77, C 74, C- 70, D+ 67, D 64, D- 61, F)
   - Not reproduced (say so in output): grading-period weighting, final grade overrides, anything hidden from students
-- [ ] `calculate_grade_scenarios(course, hypothetical_scores?, target_percent?, target_letter?)`: compare with Canvas's own score, apply what-ifs, and solve for the uniform % needed on remaining work. Target answers err high, never low. When dropping both lowest and highest makes the grade non-monotone, search a 0.5% grid
+- [x] `calculate_grade_scenarios(course, hypothetical_scores?, target_percent?, target_letter?)`: compare with Canvas's own score, apply what-ifs, and solve for the uniform % needed on remaining work. Target answers err high, never low. When dropping both lowest and highest makes the grade non-monotone, search a 0.5% grid
 - [ ] Table-driven tests from hand-checked examples, plus `proptest` for drop rules; check against your real Canvas grades
 
 ### Phase 6: Opt-in student writes (14 tools)

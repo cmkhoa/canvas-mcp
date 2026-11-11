@@ -53,6 +53,12 @@ pub struct Course {
     /// With `include[]=restrict_quantitative_data`: Canvas hides points and scores from students.
     #[serde(default)]
     pub restrict_quantitative_data: Option<bool>,
+    /// The course's own letter scheme, if it has one.
+    #[serde(default)]
+    pub grading_standard_id: Option<u64>,
+    /// With `include[]=grading_scheme` (undocumented): `[["A", 0.94], …]` or `[{name, value}, …]`.
+    #[serde(default)]
+    pub grading_scheme: Option<serde_json::Value>,
 }
 
 /// One of the caller's enrollments, as embedded in a course. Score fields need
@@ -828,6 +834,27 @@ pub struct ActivitySummary {
     pub count: u64,
     #[serde(default)]
     pub unread_count: u64,
+}
+
+/// `GET /courses/:id/grading_standards/:id`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GradingStandard {
+    pub id: u64,
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub points_based: Option<bool>,
+    #[serde(default)]
+    pub scaling_factor: Option<f64>,
+    #[serde(default)]
+    pub grading_scheme: Vec<SchemeEntry>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SchemeEntry {
+    pub name: String,
+    /// Minimum fraction (0.94 for 94%).
+    pub value: f64,
 }
 
 /// `GET /courses/:id/assignment_groups?include[]=assignments&include[]=submission`.
