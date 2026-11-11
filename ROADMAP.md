@@ -77,41 +77,39 @@ A **library + thin binary**, so integration tests can build the server against a
 ```
 canvas-mcp/
 ├── Cargo.toml
-├── .env.example              # CANVAS_API_URL, CANVAS_API_TOKEN, CANVAS_TIMEZONE
+├── .env.example              # CANVAS_API_URL, CANVAS_API_TOKEN or CANVAS_SESSION_COOKIE, CANVAS_TIMEZONE
 ├── src/
 │   ├── main.rs               # clap args (--check), tracing → stderr, load config, serve(stdio())
-│   ├── lib.rs                # pub mod …; build_server(config) -> CanvasServer
-│   ├── config.rs             # Config { api_url: Url, token: SecretString, tz: Tz, write_tools: HashSet }
-│   ├── error.rs              # CanvasError (thiserror) + to_tool_error()
+│   ├── lib.rs
+│   ├── config.rs             # Config { api_url, auth: Token | SessionCookie, timezone }
+│   ├── error.rs              # ConfigError, CanvasError
 │   ├── canvas/
-│   │   ├── client.rs         # CanvasClient: auth, get/post/put, paginate, throttle, retry
+│   │   ├── client.rs         # CanvasClient: auth, get/post/put, paginate, throttle, retry, download
 │   │   ├── pagination.rs     # Link header parsing (rel="next")
-│   │   └── models.rs         # slim serde structs: Course, Assignment, Submission, …
-│   ├── resolve.rs            # course identifier → CourseId (id | code | name | sis_course_id:)
-│   ├── format.rs             # dates → local tz, html_to_text, truncate(max_chars)
+│   │   └── models/           # slim serde structs: courses, assignments, content, activity
+│   ├── resolve.rs            # course identifier → path ID (id | code | name | sis_course_id:)
+│   ├── format.rs             # dates, html_to_text, truncate, path segments
 │   ├── untrusted.rs          # fence Canvas-authored text as data (prompt-injection guard)
-│   ├── cache.rs              # TTL cache (tokio::sync::RwLock) for course list
+│   ├── cache.rs              # TTL cache for the course list
+│   ├── grades/               # Canvas grade rules: calc (arithmetic), scheme (letters), target (solver)
 │   └── tools/
-│       ├── mod.rs            # CanvasServer + combined routers + #[tool_handler]
-│       ├── profile.rs        # get_my_profile ✓
-│       ├── courses.rs        # enrollments, courses, course details, syllabus (4a)
-│       ├── assignments.rs    # upcoming, todo, submission status, submissions (4b)
-│       ├── grades.rs         # course grades, assignment scores (4c); grade scenarios (Phase 5)
-│       ├── feed.rs           # announcements, activity stream (4d)
-│       ├── discussions.rs    # topics, entries, replies, group spaces (4e)
-│       ├── content.rs        # modules, pages, front page, structure (4f)
-│       ├── files.rs          # list/read/download files (4g)
-│       ├── quizzes.rs        # list/get quiz details (4h)
-│       ├── peer_reviews.rs   # peer reviews to do (4h)
-│       ├── groups.rs         # my groups, members, group files (4i)
-│       ├── calendar.rs       # calendar events, planner notes (4j)
-│       ├── inbox.rs          # conversations, recipients (4k)
-│       └── writes/           # opt-in write tools + confirmation tokens (Phase 6)
-├── src/grades/calc.rs        # pure Canvas grade arithmetic (Phase 5)
+│       ├── mod.rs            # CanvasServer, shared params/helpers, combined routers
+│       ├── profile.rs, courses.rs              # 4a
+│       ├── deadlines.rs, assignments.rs        # 4b
+│       ├── grades.rs                           # 4c
+│       ├── grade_scenarios.rs                  # Phase 5
+│       ├── feed.rs                             # 4d
+│       ├── discussions.rs, discussion_spaces.rs  # 4e
+│       ├── modules.rs, pages.rs                # 4f
+│       ├── files.rs                            # 4g
+│       ├── quizzes.rs, peer_reviews.rs         # 4h
+│       ├── groups.rs                           # 4i
+│       ├── calendar.rs                         # 4j
+│       ├── inbox.rs                            # 4k
+│       └── writes/                             # opt-in write tools + confirmation tokens (Phase 6)
 └── tests/
-    ├── fixtures/*.json       # handwritten/recorded Canvas responses
-    ├── client_tests.rs       # pagination, errors, throttling vs wiremock
-    └── tool_tests.rs         # call tools end-to-end vs wiremock
+    ├── common/mod.rs         # wiremock Canvas + in-memory MCP client harness
+    └── *.rs                  # one file per tool group, plus client and session-cookie tests
 ```
 
 **Splitting tools across files:** rmcp's `#[tool_router]` works per `impl` block. Give each module its own
