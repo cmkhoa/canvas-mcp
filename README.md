@@ -4,6 +4,8 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server for **Canvas 
 
 It's built for students and ships as a single binary. Reading is the default: nothing is submitted or changed in Canvas.
 
+> **Note:** This is a personal, experimental project for educational purposes. It isn't affiliated with Instructure or any school. Use it only with your own account, and in line with your institution's policies.
+
 ## Features
 
 46 read-only tools, including:
