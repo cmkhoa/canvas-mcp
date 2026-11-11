@@ -294,7 +294,7 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
 
 - **Done (2026-11-10):** all 45 tools are listed, tested against wiremock, and "What's due this week, what am I missing, and what did my instructors announce?" works end-to-end on real Canvas
 
-### Phase 5: Grade calculator (1 tool)
+### Phase 5: Grade calculator (1 tool) ✓
 - [x] Pure module `grades/calc.rs`, no I/O, reproducing Canvas's own calculator
       (`AssignmentGroupGradeCalculator.ts` / `CourseGradeCalculator.ts` in canvas-lms):
   - An assignment counts only if published, graded (not `not_graded`) and not `omit_from_final_grade`; excused submissions are removed first
@@ -306,7 +306,7 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
   - Letter from the course grading scheme (`/courses/:id/grading_standards/:id`), else Canvas's default scheme (A 94, A- 90, B+ 87, B 84, B- 80, C+ 77, C 74, C- 70, D+ 67, D 64, D- 61, F)
   - Not reproduced (say so in output): grading-period weighting, final grade overrides, anything hidden from students
 - [x] `calculate_grade_scenarios(course, hypothetical_scores?, target_percent?, target_letter?)`: compare with Canvas's own score, apply what-ifs, and solve for the uniform % needed on remaining work. Target answers err high, never low. When dropping both lowest and highest makes the grade non-monotone, search a 0.5% grid
-- [ ] Table-driven tests from hand-checked examples, plus `proptest` for drop rules; check against your real Canvas grades
+- [x] Table-driven tests from hand-checked examples; checked against real Canvas grades (4 UIC courses matched to 0.01). `proptest` for drop rules: optional, not added
 
 ### Phase 6: Opt-in student writes (14 tools)
 Safety layer first:
@@ -384,6 +384,6 @@ Deliberately absent (as in the reference): starting or taking quizzes, and anyth
 2. **M2:** robust client, models and course resolution, tested with wiremock (Phases 2–3) ✓
 3. **M3:** daily-use reads: courses, deadlines, submissions, grades, announcements (4a–4d) ✓
 4. **M4:** everything else readable: discussions, content, files, quizzes, groups, calendar, inbox (4e–4k). 45 read tools total ✓ (checked read-only on live UIC Canvas)
-5. **M5:** grade what-if calculator (Phase 5)
+5. **M5:** grade what-if calculator (Phase 5) ✓
 6. **M6:** the 14 opt-in writes with confirmation tokens (Phase 6). Full student parity: 59/59
 7. **M7:** tests, clippy, docs and release builds (Phase 7)

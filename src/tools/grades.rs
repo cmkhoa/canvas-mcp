@@ -178,14 +178,16 @@ impl CanvasServer {
                 }
             }
         }
-        if let Some(scheme) = scheme_from_course(c) {
-            return (Some(scheme), "the course's grading scheme".into());
-        }
+        // Canvas embeds a scheme in every course, even ones that don't show students letters,
+        // so without a standard of its own the course's letters count only if Canvas shows one.
         if student_enrollment(c).is_some_and(|e| e.computed_current_grade.is_some()) {
-            return (
-                Some(Scheme::canvas_default()),
-                "Canvas's default scheme".into(),
-            );
+            return match scheme_from_course(c) {
+                Some(scheme) => (Some(scheme), "the course's grading scheme".into()),
+                None => (
+                    Some(Scheme::canvas_default()),
+                    "Canvas's default scheme".into(),
+                ),
+            };
         }
         (None, "none (this course doesn't show letter grades)".into())
     }
@@ -463,10 +465,14 @@ impl CanvasServer {
         let canvas_current = enrollment.and_then(|e| e.computed_current_score);
         out.push_str(&format!(
             "Canvas reports: current {}, final {}\n",
-            enrollment.map_or("unknown".into(), |e| grade_text(
-                e.computed_current_score,
-                e.computed_current_grade.as_deref()
-            )),
+            enrollment.map_or("unknown".into(), |e| {
+                match (e.computed_current_score, &e.computed_current_grade) {
+                    (Some(s), Some(g)) => format!("{s:.2}% ({g})"),
+                    (Some(s), None) => format!("{s:.2}%"),
+                    (None, Some(g)) => g.clone(),
+                    (None, None) => "no grade yet".into(),
+                }
+            }),
             enrollment
                 .and_then(|e| e.computed_final_score)
                 .map_or("unknown".into(), |f| format!("{f:.2}%"))

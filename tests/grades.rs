@@ -290,3 +290,36 @@ async fn scenarios_without_letter_grades_refuse_letter_targets() {
         "{text}"
     );
 }
+
+#[tokio::test]
+async fn embedded_scheme_is_ignored_when_canvas_shows_no_letters() {
+    let h = Harness::new().await;
+    h.active_courses(two_courses()).await;
+    h.get(
+        "courses/210",
+        json!({ "id": 210, "restrict_quantitative_data": false, "apply_assignment_group_weights": false,
+                "grading_scheme": [["A", 0.94], ["F", 0.0]],
+                "enrollments": [{ "type": "student", "computed_current_score": 95.0 }] }),
+    )
+    .await;
+    h.get(
+        "courses/210/assignment_groups",
+        json!([{ "id": 1, "name": "All", "assignments": [
+            { "id": 1, "name": "HW", "points_possible": 20.0, "submission": { "score": 19.0 } } ] }]),
+    )
+    .await;
+    let out = h
+        .ok(
+            "calculate_grade_scenarios",
+            json!({ "course_identifier": "CHEM 210" }),
+        )
+        .await;
+    assert!(
+        out.contains("Letters: none") && out.contains("Canvas reports: current 95.00%"),
+        "{out}"
+    );
+    assert!(
+        out.contains("Recomputed: current 95.00%, final 95.00%"),
+        "{out}"
+    );
+}

@@ -255,12 +255,13 @@ pub fn with_scores(groups: &[Group], scores: &HashMap<u64, f64>) -> Vec<Group> {
     out
 }
 
-/// Assignments that still count but have no visible score.
+/// Assignments that still count, are worth points, and have no visible score.
 pub fn remaining(groups: &[Group]) -> Vec<&Item> {
+    // Zero-point items can't move the grade, so they aren't "remaining work".
     groups
         .iter()
         .flat_map(|g| &g.items)
-        .filter(|i| i.score.is_none())
+        .filter(|i| i.score.is_none() && i.possible > 0.0)
         .collect()
 }
 
@@ -724,6 +725,12 @@ mod tests {
         let what_if = with_scores(&g, &HashMap::from([(2, 90.0)]));
         assert!(close(pct(&what_if, false, Mode::Current), 80.0));
         assert_eq!(remaining(&what_if).len(), 1);
+        let with_zero_point = [group(
+            1,
+            0.0,
+            vec![item(1, Some(5.0), 10.0), item(2, None, 0.0)],
+        )];
+        assert!(remaining(&with_zero_point).is_empty());
         let projected = project_uniform(&g, 80.0);
         assert!(close(
             pct(&projected, false, Mode::Current),
