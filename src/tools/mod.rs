@@ -16,6 +16,7 @@ use crate::{
 mod assignments;
 mod calendar;
 mod courses;
+mod deadlines;
 mod discussions;
 mod feed;
 mod files;
@@ -103,6 +104,7 @@ impl CanvasServer {
             tool_router: Self::profile_router()
                 + Self::courses_router()
                 + Self::assignments_router()
+                + Self::deadlines_router()
                 + Self::grades_router()
                 + Self::grade_scenarios_router()
                 + Self::feed_router()
