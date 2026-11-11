@@ -183,7 +183,7 @@ Goal: every student-side tool in the reference (v1.17, `tools/TOOL_MANIFEST.json
 Tool names match the reference so its docs and skills carry over. `✓` = done.
 Educator-only tools (66) and developer tools (3) remain out of scope.
 
-### Phase 4: Read-only student tools (45 tools)
+### Phase 4: Read-only student tools (45 tools) ✓
 Shared conventions for every tool:
 - Typed params struct; **field doc comments are what the model sees**, so write them for the model
 - `course_identifier` goes through `CourseDirectory::resolve`; output shows course codes, not bare IDs
@@ -193,7 +193,7 @@ Shared conventions for every tool:
 - Each group gets a wiremock test file asserting the request sent and the key output lines
 
 Shared building blocks first:
-- [ ] Models: `Assignment`, `Submission`, `Enrollment`, `AssignmentGroup`, `DiscussionTopic`/`Entry`,
+- [x] Models: `Assignment`, `Submission`, `Enrollment`, `AssignmentGroup`, `DiscussionTopic`/`Entry`,
       `Module`/`ModuleItem`, `Page`, `File`, `Quiz`, `PlannerItem`/`PlannerNote`, `CalendarEvent`,
       `Group`, `Conversation`, `ActivityItem` (slim, field-by-field as tools need them)
 - [x] Fan-out helper: run one request per active course concurrently (behind the client's semaphore), keep partial results, and name the courses that failed
@@ -288,11 +288,11 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
 | Tool | Canvas endpoint(s) | Notes |
 |---|---|---|
 | `list_conversations(scope?, filter_ids?, filter_mode?, include_participants?)` ✓ | `GET /conversations` | Messages fenced |
-| `get_conversation_details(conversation_id, include_messages?)` ✓ | `GET /conversations/:id` | Reading it marks it read on Canvas; say so in the description |
+| `get_conversation_details(conversation_id, include_messages?)` ✓ | `GET /conversations/:id` | Fetched with `auto_mark_as_read=false`, so reading never marks it read |
 | `get_unread_count` ✓ | `GET /conversations/unread_count` | |
 | `find_message_recipients(course, search?, role?, limit?)` ✓ | `GET /search/recipients?context=course_:id_…` | Individuals only, with user IDs, for `send_message` |
 
-- **Done when:** all 45 tools are listed, tested against wiremock, and "What's due this week, what am I missing, and what did my instructors announce?" works end-to-end on real Canvas
+- **Done (2026-11-10):** all 45 tools are listed, tested against wiremock, and "What's due this week, what am I missing, and what did my instructors announce?" works end-to-end on real Canvas
 
 ### Phase 5: Grade calculator (1 tool)
 - [ ] Pure module `grades/calc.rs`, no I/O, reproducing Canvas's own calculator
@@ -380,10 +380,10 @@ Deliberately absent (as in the reference): starting or taking quizzes, and anyth
   Rely on docs.rs/rmcp and the repo's `examples/` folder
 
 ## 6. Milestones
-1. **M1:** binary runs in Claude, `get_my_profile` works (Phases 0–1) ✓ (real-Canvas check still pending)
+1. **M1:** binary runs in Claude, `get_my_profile` works (Phases 0–1) ✓
 2. **M2:** robust client, models and course resolution, tested with wiremock (Phases 2–3) ✓
-3. **M3:** daily-use reads: courses, deadlines, submissions, grades, announcements (4a–4d)
-4. **M4:** everything else readable: discussions, content, files, quizzes, groups, calendar, inbox (4e–4k). 45 read tools total
+3. **M3:** daily-use reads: courses, deadlines, submissions, grades, announcements (4a–4d) ✓
+4. **M4:** everything else readable: discussions, content, files, quizzes, groups, calendar, inbox (4e–4k). 45 read tools total ✓ (checked read-only on live UIC Canvas)
 5. **M5:** grade what-if calculator (Phase 5)
 6. **M6:** the 14 opt-in writes with confirmation tokens (Phase 6). Full student parity: 59/59
 7. **M7:** tests, clippy, docs and release builds (Phase 7)
