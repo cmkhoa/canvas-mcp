@@ -295,7 +295,7 @@ Fetch it **without** the bearer token rather than relaxing the same-host rule.
 - **Done (2026-11-10):** all 45 tools are listed, tested against wiremock, and "What's due this week, what am I missing, and what did my instructors announce?" works end-to-end on real Canvas
 
 ### Phase 5: Grade calculator (1 tool)
-- [ ] Pure module `grades/calc.rs`, no I/O, reproducing Canvas's own calculator
+- [x] Pure module `grades/calc.rs`, no I/O, reproducing Canvas's own calculator
       (`AssignmentGroupGradeCalculator.ts` / `CourseGradeCalculator.ts` in canvas-lms):
   - An assignment counts only if published, graded (not `not_graded`) and not `omit_from_final_grade`; excused submissions are removed first
   - **Current** grade: graded work only (no score or `pending_review` is left out). **Final** grade: ungraded work counts as 0
