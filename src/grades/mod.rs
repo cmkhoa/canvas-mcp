@@ -1,5 +1,7 @@
 //! How Canvas treats a student's submissions when it computes grades. Shared by the score
 //! listing and (Phase 5) the grade calculator.
+pub mod calc;
+
 use crate::canvas::models::{Assignment, Submission};
 
 /// Canvas's student-visible grade ignores a submission without `posted_at` (and its excusal),
