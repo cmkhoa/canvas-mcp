@@ -17,6 +17,7 @@ mod assignments;
 mod calendar;
 mod courses;
 mod deadlines;
+mod discussion_spaces;
 mod discussions;
 mod feed;
 mod files;
