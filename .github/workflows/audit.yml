@@ -1,0 +1,46 @@
+name: Audit
+
+# Advisories are published after the fact, so this runs on a schedule as well
+# as on dependency changes: a tree that was clean at push time can go stale.
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  push:
+    branches: [main]
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - deny.toml
+      - .github/workflows/audit.yml
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - deny.toml
+      - .github/workflows/audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-deny:
+    name: cargo deny ${{ matrix.checks }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Split so a new advisory does not hide a license or source problem.
+        checks:
+          - advisories
+          - bans licenses sources
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check ${{ matrix.checks }}

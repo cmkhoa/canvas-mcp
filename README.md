@@ -102,6 +102,7 @@ If the file already has other servers, add `"canvas"` next to them inside `mcpSe
 ```bash
 cargo test                           # runs against a mock Canvas (wiremock); no account needed
 cargo clippy --all-targets -- -D warnings
+cargo deny check                     # advisories, licenses, sources (needs cargo-deny)
 ```
 
 See [ROADMAP.md](ROADMAP.md) for the plan and progress. Tool design follows [vishalsachdev/canvas-mcp](https://github.com/vishalsachdev/canvas-mcp) (Python); this is an independent Rust implementation.
