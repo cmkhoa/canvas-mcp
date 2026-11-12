@@ -9,9 +9,6 @@ on:
         description: Tag to build and publish (e.g. v0.1.0)
         required: true
 
-permissions:
-  contents: write
-
 env:
   CARGO_TERM_COLOR: always
 
@@ -19,17 +16,18 @@ jobs:
   test:
     name: Gate on tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --component clippy
           rustup default stable
-
-      - uses: Swatinem/rust-cache@v2
 
       - name: cargo clippy
         run: cargo clippy --all-targets --all-features --locked -- -D warnings
@@ -41,6 +39,8 @@ jobs:
     name: ${{ matrix.target }}
     needs: test
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -52,35 +52,38 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Install Rust toolchain
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
-          rustup target add ${{ matrix.target }}
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
+          rustup target add "$TARGET"
 
       - name: Build release binary
-        run: cargo build --release --locked --target ${{ matrix.target }}
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo build --release --locked --target "$TARGET"
 
       - name: Package
+        env:
+          TARGET: ${{ matrix.target }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
-          tag="${{ github.event.inputs.tag || github.ref_name }}"
-          name="canvas-mcp-${tag}-${{ matrix.target }}"
+          name="canvas-mcp-${TAG}-${TARGET}"
           mkdir -p "dist/${name}"
-          cp "target/${{ matrix.target }}/release/canvas-mcp" "dist/${name}/"
+          cp "target/${TARGET}/release/canvas-mcp" "dist/${name}/"
           cp README.md "dist/${name}/"
           tar -C dist -czf "dist/${name}.tar.gz" "${name}"
           shasum -a 256 "dist/${name}.tar.gz" > "dist/${name}.tar.gz.sha256"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.target }}
           path: |
@@ -91,16 +94,19 @@ jobs:
     name: Publish GitHub release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: dist
           merge-multiple: true
 
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          files: |
-            dist/*.tar.gz
-            dist/*.sha256
-          generate_release_notes: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" --generate-notes dist/*.tar.gz dist/*.sha256
