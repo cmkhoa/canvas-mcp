@@ -28,6 +28,7 @@ mod inbox;
 mod modules;
 mod pages;
 mod peer_reviews;
+mod planning;
 mod profile;
 mod quizzes;
 mod schema;
@@ -112,6 +113,7 @@ impl CanvasServer {
             + Self::files_router()
             + Self::quizzes_router()
             + Self::peer_reviews_router()
+            + Self::planning_router()
             + Self::groups_router()
             + Self::calendar_router()
             + Self::inbox_router();
