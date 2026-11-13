@@ -40,7 +40,7 @@ fn problems(value: &Value, path: &str, out: &mut Vec<String>) {
 async fn every_tool_schema_is_portable() {
     let h = Harness::new().await;
     let tools = h.tools().await;
-    assert_eq!(tools.len(), 46);
+    assert_eq!(tools.len(), 47);
     let mut found = Vec::new();
     for tool in &tools {
         let schema = Value::Object((*tool.input_schema).clone());

@@ -92,7 +92,7 @@ fn score_text(sub: &Submission, possible: Option<f64>) -> String {
 }
 
 impl CanvasServer {
-    async fn assignments_with_submissions(
+    pub(super) async fn assignments_with_submissions(
         &self,
         course_path_id: &str,
     ) -> Result<(Vec<Assignment>, bool), CanvasError> {

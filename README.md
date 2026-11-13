@@ -10,7 +10,7 @@ It's built for students and ships as a single binary. Reading is the default: no
 
 ## Features
 
-46 read-only tools, including:
+47 read-only tools, including an additive structured `get_planning_snapshot` for agent clients:
 
 | Area | Tools |
 |---|---|
